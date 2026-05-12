@@ -1,0 +1,13 @@
+project:
+  name: sistemainterno-grupo-levay
+  type: greenfield
+  installedAt: '2026-05-12T02:00:12.311Z'
+  version: 1.0.0
+techStack: next
+integrations: []
+ide:
+  selected:
+    - claude-code
+slashPrefix: XOIA
+devStoryLocation: docs/stories
+language: portuguese

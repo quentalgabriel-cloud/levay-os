@@ -1,0 +1,159 @@
+workflow:
+  id: sollu-daily-execution
+  name: Sollu Daily Execution Workflow
+  version: "1.0"
+  description: >-
+    Workflow task-first para executar um ciclo diario da Sollu:
+    orquestracao, validacao de escopo, refinamento, implementacao,
+    endurecimento de UX e quality gate final.
+  type: squad
+  status_tracking:
+    owner: levay-master
+    task: levay-master-publish-implementation-status
+    target: docs/status/levay-continuity.md
+    cadence: after_each_handoff
+    template: templates/implementation-status-update-tmpl.md
+    rules:
+      - Publicar update ao fim de cada etapa concluida no workflow.
+      - Atualizar imediatamente quando houver bloqueio ou mudanca de foco.
+      - Registrar sempre stage, escopo, evidencias, riscos e proxima acao.
+
+  sequence:
+    - step: master_orchestrate
+      id: master_orchestrate
+      phase: 1
+      agent: levay-master
+      action: Orchestrate sprint slice
+      notes: Definir objetivo, KPI alvo, escopo e cadeia de handoff.
+      creates:
+        - sprint_contract
+      outputs:
+        - sprint_contract
+        - status_update
+      next: po_validate
+
+    - step: po_validate
+      id: po_validate
+      phase: 2
+      agent: levay-po
+      action: Validate scope and acceptance
+      requires:
+        - sprint_contract
+      notes: Validar valor de negocio e criterios objetivos de aceite.
+      creates:
+        - accepted_scope
+      outputs:
+        - accepted_scope
+        - acceptance_criteria
+        - status_update
+      next: sm_refine
+
+    - step: sm_refine
+      id: sm_refine
+      phase: 3
+      agent: levay-sm
+      action: Refine executable backlog
+      requires:
+        - accepted_scope
+      notes: Quebrar em historias pequenas e sequencia de implementacao.
+      creates:
+        - executable_stories
+      outputs:
+        - executable_stories
+        - status_update
+      next: dev_implement
+
+    - step: dev_implement
+      id: dev_implement
+      phase: 4
+      agent: levay-dev
+      action: Implement current slice
+      requires:
+        - executable_stories
+      notes: Entregar incremento com testes e evidencia tecnica.
+      creates:
+        - delivery_increment
+      outputs:
+        - delivery_increment
+        - test_results
+        - status_update
+      next: ux_harden
+
+    - step: ux_harden
+      id: ux_harden
+      phase: 5
+      agent: levay-ux
+      action: Harden operations UI
+      requires:
+        - delivery_increment
+      notes: Aumentar usabilidade pratica de operacao diaria.
+      creates:
+        - ux_increment
+      outputs:
+        - ux_increment
+        - status_update
+      next: qa_gate
+
+    - step: qa_gate
+      id: qa_gate
+      phase: 6
+      agent: levay-qa
+      action: Run quality gate
+      requires:
+        - ux_increment
+      notes: Executar validacao final e decidir go/no-go.
+      creates:
+        - gate_decision
+      outputs:
+        - gate_decision
+        - qa_report
+        - status_update
+      next: complete
+      on_failure: dev_implement
+
+    - step: close_cycle
+      id: complete
+      phase: 7
+      agent: levay-master
+      action: Close current cycle
+      requires:
+        - gate_decision
+      notes: Ciclo diario concluido; iniciar proximo slice e publicar fechamento executivo.
+
+  status_prompts:
+    after_master: |
+      Publicar status com objetivo do slice, KPI alvo, escopo travado e proximo handoff.
+    after_po: |
+      Publicar status com escopo aprovado, criterios de aceite e riscos de negocio.
+    after_sm: |
+      Publicar status com backlog executavel, ordem de implementacao e dependencias.
+    after_dev: |
+      Publicar status com incremento entregue, arquivos tocados, testes e pendencias.
+    after_ux: |
+      Publicar status com melhorias de usabilidade operacional e impactos percebidos.
+    after_qa: |
+      Publicar status com decisao go/no-go, riscos remanescentes e proximo movimento.
+
+  handoff_prompts:
+    after_master: |
+      Sprint contract definido. Encaminhar para PO validar escopo.
+    after_po: |
+      Escopo aprovado. Encaminhar para SM refinar backlog executavel.
+    after_sm: |
+      Backlog refinado. Encaminhar para Dev implementar incremento.
+    after_dev: |
+      Implementacao concluida. Encaminhar para UX endurecer usabilidade.
+    after_ux: |
+      UX incrementado. Encaminhar para QA executar quality gate final.
+
+  flow_diagram: |
+    ```mermaid
+    graph TD
+      A[Master Orchestrate] --> B[PO Validate]
+      B --> C[SM Refine]
+      C --> D[Dev Implement]
+      D --> E[UX Harden]
+      E --> F[QA Gate]
+      F -->|PASS| G[Cycle Complete]
+      F -->|FAIL| D
+    ```

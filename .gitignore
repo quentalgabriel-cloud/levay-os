@@ -1,0 +1,10 @@
+
+
+# XOIA Framework
+.env
+.env.local
+.env.*.local
+node_modules/
+.claude/settings.local.json
+.xoia/sessions/
+.xoia/handoffs/

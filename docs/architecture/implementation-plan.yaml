@@ -1,0 +1,217 @@
+storyId: "story-1"
+createdAt: "2026-03-19T10:30:00-03:00"
+createdBy: "@architect"
+status: pending
+complexity: COMPLEX
+estimatedEffort: "10-14 weeks"
+
+dependencies:
+  - name: "next"
+    version: "15.x"
+    purpose: "Frontend web application"
+  - name: "react"
+    version: "19.x"
+    purpose: "UI layer"
+  - name: "nestjs"
+    version: "11.x"
+    purpose: "Backend API modular"
+  - name: "supabase"
+    version: "latest"
+    purpose: "Postgres, Auth, Storage, Realtime"
+  - name: "bullmq"
+    version: "5.x"
+    purpose: "Workers e filas"
+  - name: "redis"
+    version: "7.x"
+    purpose: "Queue backend para jobs"
+
+phases:
+  - id: "phase-1"
+    name: "Foundation"
+    description: "Base multi-tenant, auth, RBAC e observabilidade"
+    subtasks:
+      - id: "1.1"
+        description: "Provisionar Supabase com schema base multi-tenant e RLS"
+        service: database
+        files:
+          - "apps/api/src/database/migrations/001_init.sql"
+          - "apps/api/src/database/policies/rls.sql"
+          - "apps/api/src/database/seeds/seed-tenants.sql"
+        verification:
+          type: command
+          command: "npm run db:migrate && npm run db:seed"
+        status: pending
+      - id: "1.2"
+        description: "Implementar auth e RBAC por tenant na API"
+        service: backend
+        files:
+          - "apps/api/src/modules/auth/auth.module.ts"
+          - "apps/api/src/modules/auth/jwt-tenant.guard.ts"
+          - "apps/api/src/modules/auth/rbac.policy.ts"
+        verification:
+          type: command
+          command: "npm run test -- auth"
+        status: pending
+      - id: "1.3"
+        description: "Criar shell de dashboard por perfil no frontend"
+        service: frontend
+        files:
+          - "apps/web/src/app/(dashboard)/layout.tsx"
+          - "apps/web/src/modules/dashboard/profile-routing.ts"
+          - "apps/web/src/modules/dashboard/widgets-shell.tsx"
+        verification:
+          type: browser
+          instructions: "Validar visao CEO/comercial/operacoes com usuarios distintos"
+        status: pending
+
+  - id: "phase-2"
+    name: "Sollu Revenue Engine"
+    description: "CRM, follow-up e cobranca automatizada"
+    subtasks:
+      - id: "2.1"
+        description: "Implementar modulo CRM com pipeline visual e leads"
+        service: backend
+        files:
+          - "apps/api/src/modules/crm/crm.controller.ts"
+          - "apps/api/src/modules/crm/crm.service.ts"
+          - "apps/api/src/modules/crm/crm.repository.ts"
+        verification:
+          type: api
+          url: "http://localhost:3000/api/v1/crm/leads"
+          expectedStatus: 200
+        status: pending
+      - id: "2.2"
+        description: "Implementar workers D+0 D+1 D+3 com templates de mensagem"
+        service: infra
+        files:
+          - "apps/workers/src/jobs/followup.scheduler.ts"
+          - "apps/workers/src/jobs/followup.dispatcher.ts"
+          - "packages/integrations/src/whatsapp/client.ts"
+        verification:
+          type: command
+          command: "npm run test -- followup"
+        status: pending
+      - id: "2.3"
+        description: "Implementar contas a receber e eventos de cobranca"
+        service: database
+        files:
+          - "apps/api/src/database/migrations/010_receivables.sql"
+          - "apps/api/src/modules/billing/billing.service.ts"
+          - "apps/workers/src/jobs/billing.reminder.ts"
+        verification:
+          type: api
+          url: "http://localhost:3000/api/v1/billing/receivables"
+          expectedStatus: 200
+        status: pending
+
+  - id: "phase-3"
+    name: "AMP 213 Lead to Event"
+    description: "Captura, CRM de atendimento e calendario"
+    subtasks:
+      - id: "3.1"
+        description: "Criar endpoint de webhook n8n para ingestao de leads"
+        service: backend
+        files:
+          - "apps/api/src/modules/integrations/n8n.webhook.controller.ts"
+          - "apps/api/src/modules/integrations/n8n.signature.ts"
+          - "apps/api/src/modules/crm/lead-ingestion.service.ts"
+        verification:
+          type: api
+          url: "http://localhost:3000/api/v1/integrations/n8n/webhook"
+          expectedStatus: 202
+        status: pending
+      - id: "3.2"
+        description: "Implementar calendario de eventos com conflitos"
+        service: frontend
+        files:
+          - "apps/web/src/modules/events/calendar-view.tsx"
+          - "apps/web/src/modules/events/conflict-badge.tsx"
+          - "apps/web/src/modules/events/api.ts"
+        verification:
+          type: browser
+          instructions: "Criar dois eventos no mesmo horario e validar alerta de conflito"
+        status: pending
+
+  - id: "phase-4"
+    name: "Bica Bar Premium"
+    description: "Reservas, membership e estoque"
+    subtasks:
+      - id: "4.1"
+        description: "Implementar reservas com mesas, lotacao e fila"
+        service: backend
+        files:
+          - "apps/api/src/modules/reservations/reservations.controller.ts"
+          - "apps/api/src/modules/reservations/reservations.service.ts"
+          - "apps/api/src/modules/reservations/waitlist.service.ts"
+        verification:
+          type: api
+          url: "http://localhost:3000/api/v1/reservations"
+          expectedStatus: 200
+        status: pending
+      - id: "4.2"
+        description: "Implementar membership BICA CLUB"
+        service: database
+        files:
+          - "apps/api/src/database/migrations/030_membership.sql"
+          - "apps/api/src/modules/membership/membership.service.ts"
+          - "apps/web/src/modules/membership/memberships-page.tsx"
+        verification:
+          type: command
+          command: "npm run test -- membership"
+        status: pending
+
+  - id: "phase-5"
+    name: "Quality Gates and Integrations"
+    description: "Aprovacoes humanas e conectores externos"
+    subtasks:
+      - id: "5.1"
+        description: "Implementar fluxo de quality gates por etapa critica"
+        service: backend
+        files:
+          - "apps/api/src/modules/quality-gates/quality-gates.service.ts"
+          - "apps/api/src/modules/quality-gates/approvals.controller.ts"
+          - "apps/api/src/modules/audit/audit.service.ts"
+        verification:
+          type: api
+          url: "http://localhost:3000/api/v1/quality-gates/pending"
+          expectedStatus: 200
+        status: pending
+      - id: "5.2"
+        description: "Conectar Google Drive para armazenamento de contratos"
+        service: infra
+        files:
+          - "packages/integrations/src/google-drive/client.ts"
+          - "apps/workers/src/jobs/contract-upload.job.ts"
+          - "apps/api/src/modules/contracts/contracts.service.ts"
+        verification:
+          type: command
+          command: "npm run test -- contracts"
+        status: pending
+
+  - id: "phase-6"
+    name: "Executive Intelligence"
+    description: "KPIs consolidados e insights cross-tenant"
+    subtasks:
+      - id: "6.1"
+        description: "Criar endpoint analitico consolidado por tenant"
+        service: backend
+        files:
+          - "apps/api/src/modules/analytics/analytics.controller.ts"
+          - "apps/api/src/modules/analytics/analytics.service.ts"
+          - "apps/api/src/modules/analytics/kpi.query.ts"
+        verification:
+          type: api
+          url: "http://localhost:3000/api/v1/analytics/executive"
+          expectedStatus: 200
+        status: pending
+      - id: "6.2"
+        description: "Criar dashboard executivo com filtros e alertas"
+        service: frontend
+        files:
+          - "apps/web/src/modules/analytics/executive-dashboard.tsx"
+          - "apps/web/src/modules/analytics/kpi-cards.tsx"
+          - "apps/web/src/modules/analytics/alerts-panel.tsx"
+        verification:
+          type: browser
+          instructions: "Validar filtros por tenant e periodo com dados reais"
+        status: pending

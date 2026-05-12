@@ -1,0 +1,8 @@
+tenant: sollu
+focus:
+  - reduce_followup_loss
+  - accelerate_collection
+  - clear_quality_gate_queue
+kpi_targets:
+  weekly_loss_reduction_brl: 5000
+  bulk_action_success_rate: 0.95

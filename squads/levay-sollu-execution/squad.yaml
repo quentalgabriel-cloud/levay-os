@@ -1,0 +1,57 @@
+name: levay-sollu-execution
+version: 1.0.0
+short-title: Levay Sollu Execution Squad
+description: Squad task-first para evolucao operacional da Sollu no Levay OS com handoff controlado por quality gates.
+author: Gabriel Quental
+license: MIT
+slashPrefix: levay-sollu
+
+aiox:
+  minVersion: "2.1.0"
+  type: squad
+
+components:
+  tasks:
+    - levay-master-orchestrate-sprint.md
+    - levay-master-publish-implementation-status.md
+    - levay-po-validate-scope.md
+    - levay-sm-refine-backlog.md
+    - levay-dev-implement-sollu-slice.md
+    - levay-ux-harden-operations-ui.md
+    - levay-qa-run-quality-gate.md
+  agents:
+    - levay-master.md
+    - levay-po.md
+    - levay-sm.md
+    - levay-dev.md
+    - levay-ux.md
+    - levay-qa.md
+  checklists:
+    - sollu-release-gate.md
+  templates:
+    - implementation-status-update-tmpl.md
+    - slice-handoff-tmpl.md
+  workflows:
+    - sollu-daily-execution.yaml
+  tools:
+    - operational-priority-tool.js
+  scripts:
+    - run-squad-health.sh
+
+config:
+  extends: extend
+  coding-standards: config/coding-standards.md
+  tech-stack: config/tech-stack.md
+  source-tree: config/source-tree.md
+
+dependencies:
+  node: []
+  python: []
+  squads: []
+
+tags:
+  - levay
+  - sollu
+  - operations
+  - task-first
+  - handoff

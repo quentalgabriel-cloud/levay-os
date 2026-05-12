@@ -1,0 +1,89 @@
+metadata:
+  version: "1.0.0"
+  generated_by: "Uma"
+  generated_at: "2026-03-19T11:05:00-03:00"
+  dtcg_spec: "2025.10"
+  color_space: "oklch"
+  coverage: "100%"
+  reduction: "custom-brand-set -> unified-token-system"
+
+layers:
+  core:
+    color:
+      "$type": "color"
+
+      neutral-0: { "$value": "oklch(0.985 0.003 95)" }
+      neutral-50: { "$value": "oklch(0.965 0.004 95)" }
+      neutral-100: { "$value": "oklch(0.93 0.006 95)" }
+      neutral-200: { "$value": "oklch(0.86 0.01 95)" }
+      neutral-300: { "$value": "oklch(0.74 0.012 95)" }
+      neutral-400: { "$value": "oklch(0.62 0.014 95)" }
+      neutral-500: { "$value": "oklch(0.5 0.014 95)" }
+      neutral-600: { "$value": "oklch(0.39 0.012 95)" }
+      neutral-700: { "$value": "oklch(0.29 0.01 95)" }
+      neutral-800: { "$value": "oklch(0.21 0.008 95)" }
+      neutral-900: { "$value": "oklch(0.15 0.006 95)" }
+      neutral-950: { "$value": "oklch(0.12 0.005 95)" }
+
+      brand-champagne-300: { "$value": "oklch(0.82 0.05 85)" }
+      brand-champagne-400: { "$value": "oklch(0.75 0.07 85)" }
+      brand-champagne-500: { "$value": "oklch(0.68 0.09 85)" }
+      brand-champagne-600: { "$value": "oklch(0.6 0.08 85)" }
+
+      tenant-sollu-500: { "$value": "oklch(0.64 0.12 155)" }
+      tenant-amp213-500: { "$value": "oklch(0.7 0.15 55)" }
+      tenant-bica-500: { "$value": "oklch(0.62 0.11 45)" }
+
+      success-500: { "$value": "oklch(0.7 0.14 150)" }
+      warning-500: { "$value": "oklch(0.78 0.14 85)" }
+      error-500: { "$value": "oklch(0.62 0.2 25)" }
+      info-500: { "$value": "oklch(0.65 0.14 250)" }
+
+  semantic:
+    color:
+      "$type": "color"
+
+      background-canvas: { "$value": "{core.color.neutral-950}" }
+      background-surface: { "$value": "{core.color.neutral-900}" }
+      background-elevated: { "$value": "{core.color.neutral-800}" }
+
+      text-primary: { "$value": "{core.color.neutral-50}" }
+      text-secondary: { "$value": "{core.color.neutral-200}" }
+      text-muted: { "$value": "{core.color.neutral-400}" }
+
+      border-default: { "$value": "{core.color.neutral-700}" }
+      border-strong: { "$value": "{core.color.neutral-500}" }
+
+      action-primary-bg: { "$value": "{core.color.brand-champagne-500}" }
+      action-primary-bg-hover: { "$value": "{core.color.brand-champagne-600}" }
+      action-primary-fg: { "$value": "{core.color.neutral-950}" }
+
+      kpi-highlight: { "$value": "{core.color.brand-champagne-400}" }
+      quality-gate-pending: { "$value": "{core.color.warning-500}" }
+      quality-gate-approved: { "$value": "{core.color.success-500}" }
+      quality-gate-rejected: { "$value": "{core.color.error-500}" }
+
+      tenant-sollu: { "$value": "{core.color.tenant-sollu-500}" }
+      tenant-amp213: { "$value": "{core.color.tenant-amp213-500}" }
+      tenant-bica: { "$value": "{core.color.tenant-bica-500}" }
+
+  component:
+    color:
+      "$type": "object"
+
+      card:
+        bg: { "$value": "{semantic.color.background-surface}" }
+        border: { "$value": "{semantic.color.border-default}" }
+        title: { "$value": "{semantic.color.text-primary}" }
+        subtitle: { "$value": "{semantic.color.text-secondary}" }
+
+      pipeline-lead:
+        bg: { "$value": "{semantic.color.background-elevated}" }
+        border: { "$value": "{semantic.color.border-default}" }
+        priority: { "$value": "{semantic.color.kpi-highlight}" }
+
+      quality-gate-card:
+        bg: { "$value": "{semantic.color.background-surface}" }
+        pending: { "$value": "{semantic.color.quality-gate-pending}" }
+        approved: { "$value": "{semantic.color.quality-gate-approved}" }
+        rejected: { "$value": "{semantic.color.quality-gate-rejected}" }

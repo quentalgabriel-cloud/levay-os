@@ -1,0 +1,54 @@
+schema: 1
+story: '1.3'
+story_title: 'dashboard-dinamico-por-perfil'
+gate: CONCERNS
+status_reason: 'Dashboard por perfil esta funcional e testado, mas falta RBAC/tenant enforcement real e a story ainda nao esta em Review com File List preenchida.'
+reviewer: 'Quinn (Test Architect)'
+updated: '2026-03-19T00:00:00.000Z'
+
+top_issues:
+  - id: 'qa-1'
+    severity: medium
+    summary: 'Story ainda nao esta em Review e nao possui File List atualizado.'
+    suggested_owner: 'sm'
+  - id: 'qa-2'
+    severity: medium
+    summary: 'RBAC/tenant enforcement real ainda nao implementado; tenant_id segue entrada por request.'
+    suggested_owner: 'dev'
+
+waiver:
+  active: false
+
+quality_score: 80
+expires: '2026-04-02T00:00:00.000Z'
+
+evidence:
+  tests_reviewed: 2
+  risks_identified: 2
+  trace:
+    ac_covered: [2, 3, 4, 5, 6]
+    ac_gaps: [1]
+
+nfr_validation:
+  security:
+    status: CONCERNS
+    notes: 'Falta RBAC real e autenticacao; tenant_id baseado em payload.'
+  performance:
+    status: PASS
+    notes: 'Sem degradacoes observadas; operacoes simples e rápidas.'
+  reliability:
+    status: PASS
+    notes: 'Fluxos com tratamento de erro/empty state e testes cobrindo principais caminhos.'
+  maintainability:
+    status: PASS
+    notes: 'Separacao clara de view-model, cliente e template; testes atualizados.'
+
+recommendations:
+  immediate:
+    - action: 'Mover story para Review e atualizar File List/Dev Agent Record.'
+      refs: ['docs/stories/1.3.dashboard-dinamico-por-perfil.md']
+    - action: 'Implementar enforcement de tenant e RBAC real na API antes de ir a producao.'
+      refs: ['apps/api/src/app.js']
+  future:
+    - action: 'Adicionar testes E2E para visoes CEO/comercial/operacoes.'
+      refs: ['apps/web']
