@@ -1,5 +1,7 @@
 export async function analyticsRoutes(fastify, options) {
-  const { analyticsService } = options;
+  const { analyticsService, crmService, billingService, reservationsService, eventsService } = options;
+
+  analyticsService.setServices({ crmService, billingService, reservationsService, eventsService });
 
   fastify.post('/api/v1/analytics/events', async (request, reply) => {
     const { tenantId, revenue, conversion, efficiency, createdAt } = request.body;
@@ -18,7 +20,7 @@ export async function analyticsRoutes(fastify, options) {
       return reply.code(403).send({ message: 'tenantId is required for non-ceo role' });
     }
 
-    const result = analyticsService.getExecutiveKpis({ tenantId, from, to });
+    const result = await analyticsService.getExecutiveKpis({ tenantId, from, to, role });
     return reply.send(result);
   });
 }

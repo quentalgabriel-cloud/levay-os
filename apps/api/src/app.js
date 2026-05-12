@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import { CrmRepository } from './modules/crm/crm.repository.js';
 import { AuditService } from './modules/audit/audit.service.js';
+import { auditRepository } from './modules/audit/audit.repository.js';
+import { auditRoutes } from './modules/audit/audit.controller.js';
 import { CrmService } from './modules/crm/crm.service.js';
 import { crmRoutes } from './modules/crm/crm.controller.js';
 import { BillingRepository } from './modules/billing/billing.repository.js';
@@ -41,15 +43,38 @@ import {
   createSessionContext,
   mutateRequestTenant
 } from './modules/session/session.context.js';
+import { jwtAuthMiddleware } from './middleware/auth.middleware.js';
+import { securityHeaders, rateLimitMiddleware } from './middleware/security.middleware.js';
+import { logger, createLogMiddleware } from './middleware/logger.middleware.js';
+import { observabilityRoutes } from './modules/observability/observability.controller.js';
 
 const DEFAULT_ALLOWED_ORIGIN = 'http://localhost:3200';
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:3200',
+  'http://localhost:3000',
+  'http://localhost:3201',
+  'https://levay.app',
+  'https://www.levay.app'
+]);
+const LOCALHOST_REGEX = /^http:\/\/localhost:\d+$/;
 const READ_ONLY_TENANT_QUERY_FALLBACK = new Set([
   '/api/v1/operations/events/summary',
   '/api/v1/operations/events/stream'
 ]);
 
 function resolveAllowedOrigin(request) {
-  return process.env.ALLOWED_ORIGIN || request.headers.origin || DEFAULT_ALLOWED_ORIGIN;
+  const envOrigin = process.env.ALLOWED_ORIGIN;
+  if (envOrigin) {
+    if (LOCALHOST_REGEX.test(envOrigin) || ALLOWED_ORIGINS.has(envOrigin)) {
+      return envOrigin;
+    }
+    return DEFAULT_ALLOWED_ORIGIN;
+  }
+  const requestOrigin = request.headers.origin;
+  if (requestOrigin && (ALLOWED_ORIGINS.has(requestOrigin) || LOCALHOST_REGEX.test(requestOrigin))) {
+    return requestOrigin;
+  }
+  return DEFAULT_ALLOWED_ORIGIN;
 }
 
 export function buildApp() {
@@ -59,13 +84,66 @@ export function buildApp() {
   app.decorate('resolveAllowedOrigin', resolveAllowedOrigin);
 
   app.addHook('onRequest', async (request, reply) => {
-    reply.header('access-control-allow-origin', resolveAllowedOrigin(request));
+    securityHeaders(request, reply);
+    createLogMiddleware(request, reply);
+  });
+
+  app.addHook('onRequest', async (request, reply) => {
+    const origin = resolveAllowedOrigin(request);
+    reply.header('access-control-allow-origin', origin);
     reply.header('access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    reply.header('access-control-allow-headers', 'content-type,x-role,x-tenant-id');
+    reply.header('access-control-allow-headers', 'content-type,x-role,x-tenant-id,authorization');
     reply.header('access-control-allow-credentials', 'true');
 
     if (request.method === 'OPTIONS') {
       return reply.code(204).send();
+    }
+  });
+
+  app.setErrorHandler((error, request, reply) => {
+    logger.error({
+      err: error,
+      url: request.url,
+      method: request.method,
+      correlationId: request.headers['x-correlation-id']
+    }, 'Unhandled error');
+
+    if (error.validation) {
+      return reply.code(400).send({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid request parameters',
+        details: error.validation
+      });
+    }
+
+    return reply.code(500).send({
+      error: 'INTERNAL_ERROR',
+      message: process.env.NODE_ENV === 'production' 
+        ? 'An unexpected error occurred' 
+        : error.message
+    });
+  });
+
+  app.get('/health', async (request, reply) => {
+    return reply.send({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/health/ready', async (request, reply) => {
+    return reply.send({ status: 'ready', timestamp: new Date().toISOString() });
+  });
+
+  app.addHook('preHandler', async (request, reply) => {
+    if (!request.url.startsWith('/api/v1')) return;
+    if (request.url.startsWith('/api/v1/demo/bootstrap')) return;
+    if (request.url.startsWith('/api/v1/auth')) return;
+    if (process.env.ENABLE_AUTH === 'true') {
+      const authHeader = request.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return reply.code(401).send({
+          error: 'UNAUTHORIZED',
+          message: 'JWT token required. Set ENABLE_AUTH=false for development.'
+        });
+      }
     }
   });
 
@@ -211,10 +289,18 @@ export function buildApp() {
   app.register(membershipRoutes, { membershipService });
   app.register(qualityGatesRoutes, { qualityGatesService });
   app.register(contractsRoutes, { contractsService });
-  app.register(analyticsRoutes, { analyticsService });
+  app.register(analyticsRoutes, { 
+  analyticsService,
+  crmService,
+  billingService,
+  reservationsService,
+  eventsService
+});
   app.register(operationsRoutes, { operationsService });
   app.register(tasksRoutes, { tasksService });
   app.register(actionsRoutes, { actionsService });
   app.register(dashboardRoutes);
+  app.register(auditRoutes);
+  app.register(observabilityRoutes);
   return app;
 }
