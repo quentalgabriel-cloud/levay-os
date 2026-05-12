@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 
 echo "[levay-squad] validating squad manifest"
 node - <<'NODE'
-const { SquadValidator } = require('/Users/gabrielquental/Documents/.aiox-core/development/scripts/squad');
+const { SquadValidator } = require('./.aiox-core/development/scripts/squad');
 (async () => {
   const validator = new SquadValidator({ verbose: false });
   const result = await validator.validate('./squads/levay-sollu-execution');

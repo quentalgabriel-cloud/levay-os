@@ -34,6 +34,9 @@ import { operationsRoutes } from './modules/operations/operations.controller.js'
 import { ActionsService } from './modules/actions/actions.service.js';
 import { actionsRoutes } from './modules/actions/actions.controller.js';
 import { dashboardRoutes } from './modules/dashboard/dashboard.controller.js';
+import { TasksRepository } from './modules/tasks/tasks.repository.js';
+import { TasksService } from './modules/tasks/tasks.service.js';
+import { tasksRoutes } from './modules/tasks/tasks.controller.js';
 import {
   createSessionContext,
   mutateRequestTenant
@@ -124,6 +127,8 @@ export function buildApp() {
   const analyticsService = new AnalyticsService(analyticsRepository);
   const operationsRepository = new OperationsRepository();
   const operationsService = new OperationsService(operationsRepository);
+  const tasksRepository = new TasksRepository();
+  const tasksService = new TasksService(tasksRepository);
   const actionsService = new ActionsService({
     crmService,
     billingService,
@@ -208,6 +213,7 @@ export function buildApp() {
   app.register(contractsRoutes, { contractsService });
   app.register(analyticsRoutes, { analyticsService });
   app.register(operationsRoutes, { operationsService });
+  app.register(tasksRoutes, { tasksService });
   app.register(actionsRoutes, { actionsService });
   app.register(dashboardRoutes);
   return app;

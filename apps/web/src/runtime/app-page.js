@@ -1,6 +1,7 @@
 import { AppResourceClient } from '../modules/app/app-resource-client.js';
 import { buildAppOverviewModel } from '../modules/app/app-overview-model.js';
 import { renderAppScreenHtml } from '../modules/app/app-screen-template.js';
+import { renderCockpitScreenHtml } from '../modules/app/cockpit-template.js';
 
 const DEFAULT_CONFIG = {
   tenantId: 'sollu',
@@ -325,12 +326,17 @@ async function bootstrap() {
         lastRecommendationFingerprint = '';
       }
 
-      root.innerHTML = renderAppScreenHtml(model);
-      const shell = root.querySelector('.levay-app-shell');
-      if (shell) {
-        shell.classList.toggle('is-collapsed', uiState.sidebarCollapsed);
+      if (config.role === 'ceo') {
+        root.innerHTML = renderCockpitScreenHtml(model);
+        initCockpitHandlers(model);
+      } else {
+        root.innerHTML = renderAppScreenHtml(model);
+        const shell = root.querySelector('.levay-app-shell');
+        if (shell) {
+          shell.classList.toggle('is-collapsed', uiState.sidebarCollapsed);
+        }
+        applyListFilters();
       }
-      applyListFilters();
 
       const sidebarToggle = root.querySelector('[data-sidebar-toggle]');
       const updateSidebarToggle = () => {
@@ -602,7 +608,8 @@ async function bootstrap() {
           }
         });
       });
-    } catch {
+    } catch (error) {
+      console.error('[app] render error', error);
       root.innerHTML = `
         <section class="levay-app-shell" data-tenant="${config.tenantId}">
           <section class="app-errors" role="alert">
@@ -615,6 +622,104 @@ async function bootstrap() {
       rendering = false;
     }
   };
+
+  const initCockpitHandlers = async (model) => {
+    const tasks = unwrapSnapshotItems(latestSnapshot.tasks);
+    
+    const renderColumn = (statusCockpit, listSelector, countSelector) => {
+      const filtered = tasks.filter(t => t.statusCockpit === statusCockpit && t.status !== 'COMPLETED');
+      const listEl = root.querySelector(listSelector);
+      const countEl = root.querySelector(countSelector);
+      
+      if (countEl) countEl.textContent = filtered.length;
+      if (!listEl) return;
+      
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<li class="app-list-empty">Vazio</li>';
+        return;
+      }
+      
+      listEl.innerHTML = filtered.map(task => `
+        <li class="cockpit-item" data-task-id="${task.id}">
+          <p class="item-title">${escapeHtml(task.title)}</p>
+          ${task.movimentoMinimo ? `<span class="item-movimento">⚡ ${escapeHtml(task.movimentoMinimo)}</span>` : ''}
+          <div class="item-meta">
+            <span>${task.priority === 'HIGH' ? '🔴 Alta' : '⚪ Normal'}</span>
+            <span>${task.dueDate ? new Date(task.dueDate).toLocaleDateString('pt-BR') : ''}</span>
+          </div>
+          <div class="item-actions">
+            <button type="button" data-task-action="complete" data-task-id="${task.id}">Concluir</button>
+            <button type="button" data-task-action="move" data-task-id="${task.id}">Mover</button>
+          </div>
+        </li>
+      `).join('');
+    };
+
+    renderColumn('HOJE', '[data-list-hoje]', '[data-count-hoje]');
+    renderColumn('DECIDIR', '[data-list-decidir]', '[data-count-decidir]');
+    renderColumn('DELEGAR', '[data-list-delegar]', '[data-count-delegar]');
+    
+    // Alerts (placeholder for now)
+    const alertsList = root.querySelector('[data-list-alertas]');
+    const alertsCount = root.querySelector('[data-count-alertas]');
+    if (alertsCount) alertsCount.textContent = '0';
+    if (alertsList) alertsList.innerHTML = '<li class="app-list-empty">Tudo sob controle</li>';
+
+    // Capture Handler
+    const processBtn = root.querySelector('[data-action="process-capture"]');
+    const captureInput = root.querySelector('[data-capture-input]');
+    
+    if (processBtn && captureInput) {
+      processBtn.addEventListener('click', async () => {
+        const text = captureInput.value.trim();
+        if (!text) return;
+        
+        processBtn.disabled = true;
+        processBtn.textContent = 'Nonô pensando...';
+        
+        try {
+          // Simulation: creating a task in QUARENTENA
+          await client.post('/api/v1/tasks', {
+            title: text,
+            statusCockpit: 'QUARENTENA',
+            priority: 'NORMAL'
+          }, { tenantId: config.tenantId });
+          
+          captureInput.value = '';
+          pushFeedback('Captura enviada para o Nonô.', 'success');
+          await renderSnapshot();
+        } catch {
+          pushFeedback('Falha ao processar captura.', 'error');
+        } finally {
+          processBtn.disabled = false;
+          processBtn.textContent = 'Processar com Nonô';
+        }
+      });
+    }
+
+    // Task Actions
+    root.querySelectorAll('[data-task-action="complete"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const taskId = btn.getAttribute('data-task-id');
+        try {
+          await client.post(`/api/v1/tasks/${taskId}/complete`, {}, { tenantId: config.tenantId });
+          pushFeedback('Tarefa concluída!', 'success');
+          await renderSnapshot();
+        } catch {
+          pushFeedback('Erro ao concluir tarefa.', 'error');
+        }
+      });
+    });
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   await renderSnapshot();
   pollId = window.setInterval(renderSnapshot, 20000);

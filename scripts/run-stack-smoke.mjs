@@ -88,8 +88,15 @@ async function main() {
       return data;
     });
 
-    await fetchJson(`${apiBaseUrl}/api/v1/demo/bootstrap?tenantId=sollu`, {
-      method: 'POST'
+    await waitFor(`${apiBaseUrl}/api/v1/operations/events/summary?tenantId=sollu`, async (url) => {
+      try {
+        await fetchJson(`${apiBaseUrl}/api/v1/demo/bootstrap?tenantId=sollu`, {
+          method: 'POST'
+        });
+        return true;
+      } catch (error) {
+        throw new Error(`API bootstrap failed: ${error.message}`);
+      }
     });
 
     const operationsSummary = await waitFor(

@@ -1,4 +1,5 @@
 import { APP_SCREEN_CSS } from './app-screen-template.js';
+import { COCKPIT_CSS } from './cockpit-template.js';
 
 const BASE_CSS = `
 :root {
@@ -14,9 +15,11 @@ const BASE_CSS = `
   --core-color-error-500: #c26152;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap');
+
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body { background: var(--semantic-color-background-canvas); }
+html, body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+body { background: var(--semantic-color-background-canvas); color: var(--semantic-color-text-primary); }
 `.trim();
 
 export function renderAppPageDocument({
@@ -29,10 +32,11 @@ export function renderAppPageDocument({
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Levay OS · App</title>
+    <title>Levay OS · ${role === 'ceo' ? 'Mesa do Diretor' : 'Centro de Operações'}</title>
     <style>
 ${BASE_CSS}
 ${APP_SCREEN_CSS}
+${COCKPIT_CSS}
     </style>
   </head>
   <body>

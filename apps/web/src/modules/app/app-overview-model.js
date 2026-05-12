@@ -58,9 +58,9 @@ function priorityTone(count) {
 
 function cardAllowed(role, cardId) {
   const byRole = {
-    ceo: new Set(['receivables', 'quality-gates', 'events', 'operations']),
-    commercial: new Set(['leads', 'receivables', 'quality-gates', 'contracts', 'operations']),
-    operations: new Set(['quality-gates', 'contracts', 'events', 'reservations', 'members', 'operations'])
+    ceo: new Set(['receivables', 'quality-gates', 'events', 'operations', 'tasks']),
+    commercial: new Set(['leads', 'receivables', 'quality-gates', 'contracts', 'operations', 'tasks']),
+    operations: new Set(['quality-gates', 'contracts', 'events', 'reservations', 'members', 'operations', 'tasks'])
   };
   return (byRole[role] || byRole.operations).has(cardId);
 }
@@ -95,7 +95,8 @@ function sectionResourceMap(sectionId) {
     operations: 'operations',
     'operations-timeline': 'operationsEvents',
     'recommendation-efficiency': 'recommendationEvents',
-    analytics: 'analytics'
+    analytics: 'analytics',
+    tasks: 'tasks'
   };
   return map[sectionId] || null;
 }
@@ -327,9 +328,11 @@ export function buildAppOverviewModel(snapshot, { tenantId = 'sollu', role = 'op
   const analytics = unwrapObject(snapshot.analytics, { tenants: [], consolidated: {} });
   const operations = unwrapObject(snapshot.operations, {});
   const membership = unwrapObject(snapshot.membership, {});
+  const tasks = unwrapItems(snapshot.tasks);
   const pendingReceivables = receivables.filter((item) => item.status === 'pending');
   const nonProposalLeads = leads.filter((lead) => lead.stageId !== 'proposal');
   const pendingQualityGates = pendingGates.filter((gate) => gate.status !== 'approved');
+  const urgentTasks = tasks.filter(t => t.priority === 'high');
 
   const errors = [
     ['crm', getSettledError(snapshot.crm)],
@@ -342,7 +345,8 @@ export function buildAppOverviewModel(snapshot, { tenantId = 'sollu', role = 'op
     ['analytics', getSettledError(snapshot.analytics)],
     ['operations', getSettledError(snapshot.operations)],
     ['operationsEvents', getSettledError(snapshot.operationsEvents)],
-    ['recommendationEvents', getSettledError(snapshot.recommendationEvents)]
+    ['recommendationEvents', getSettledError(snapshot.recommendationEvents)],
+    ['tasks', getSettledError(snapshot.tasks)]
   ]
     .filter(([, value]) => value)
     .map(([resource, message]) => ({ resource, message }));
@@ -355,7 +359,8 @@ export function buildAppOverviewModel(snapshot, { tenantId = 'sollu', role = 'op
     { id: 'events', label: 'Eventos AMP 213', value: events.length, tone: 'accent' },
     { id: 'reservations', label: 'Reservas Bica', value: reservations.length, tone: 'success' },
     { id: 'members', label: 'Members Bica', value: membership.members?.length || membership.activeMembers || 0, tone: 'accent' },
-    { id: 'operations', label: 'Eventos Operacionais', value: operations.total || 0, tone: 'warning' }
+    { id: 'operations', label: 'Eventos Operacionais', value: operations.total || 0, tone: 'warning' },
+    { id: 'tasks', label: 'Tarefas Ativas', value: tasks.length, tone: 'warning' }
   ];
 
   const sections = [
@@ -364,6 +369,13 @@ export function buildAppOverviewModel(snapshot, { tenantId = 'sollu', role = 'op
       title: 'Prioridades de hoje',
       meta: 'Execucao rapida',
       items: [
+        {
+          id: 'prio-tasks',
+          title: 'Tarefas urgentes',
+          subtitle: `${urgentTasks.length} para hoje`,
+          detail: 'Resolve as pendencias operacionais do dia',
+          actions: []
+        },
         {
           id: 'prio-billing',
           title: 'Cobrancas pendentes',
@@ -484,6 +496,18 @@ export function buildAppOverviewModel(snapshot, { tenantId = 'sollu', role = 'op
         title: item.type,
         subtitle: 'operational event',
         detail: `${item.count}`
+      }))
+    },
+    {
+      id: 'tasks',
+      title: 'Tarefas',
+      meta: `${tasks.length} ativas`,
+      items: tasks.slice(0, 10).map((item) => ({
+        id: item.id,
+        title: item.title,
+        subtitle: item.block || 'geral',
+        detail: item.dueDate || 'sem prazo',
+        actions: [{ id: 'task.complete', label: 'Concluir' }]
       }))
     },
     {
@@ -614,7 +638,8 @@ export function buildAppOverviewModel(snapshot, { tenantId = 'sollu', role = 'op
     tenantOptions: [
       { id: 'sollu', label: 'Sollu' },
       { id: 'amp213', label: 'AMP 213' },
-      { id: 'bica', label: 'Bica Bar' }
+      { id: 'bica', label: 'Bica Bar' },
+      { id: 'pessoal', label: 'Pessoal (Erick)' }
     ],
     role,
     roleLabel: roleLabel(role),

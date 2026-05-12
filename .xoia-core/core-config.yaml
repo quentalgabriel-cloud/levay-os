@@ -1,7 +1,7 @@
 project:
-  name: sistemainterno-grupo-levay
+  name: Levay OS
   type: greenfield
-  installedAt: '2026-05-12T02:00:12.311Z'
+  installedAt: '2026-05-12T03:23:50.192Z'
   version: 1.0.0
 techStack: next
 integrations: []

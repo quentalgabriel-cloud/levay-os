@@ -82,7 +82,8 @@ export class AppResourceClient {
       analytics,
       operations,
       operationsEvents,
-      recommendationEvents
+      recommendationEvents,
+      tasks
     ] = await Promise.allSettled([
       this.get('/api/v1/crm/leads', { tenantId }, { tenantId }),
       this.get('/api/v1/billing/receivables', { tenantId }, { tenantId }),
@@ -99,7 +100,8 @@ export class AppResourceClient {
         flow: 'sollu.recommendation',
         since: since24h,
         limit: 250
-      }, { tenantId })
+      }, { tenantId }),
+      this.get('/api/v1/tasks', { tenantId }, { tenantId })
     ]);
 
     let dashboardContext = null;
@@ -121,6 +123,7 @@ export class AppResourceClient {
       operations,
       operationsEvents,
       recommendationEvents,
+      tasks,
       dashboardContext
     };
   }
@@ -213,6 +216,10 @@ export class AppResourceClient {
       actorType,
       payload
     }, { tenantId });
+  }
+
+  async getTasks({ tenantId, statusCockpit, status }) {
+    return this.get('/api/v1/tasks', { tenantId, statusCockpit, status }, { tenantId });
   }
 
   async getDashboardContext({ tenantId, role = 'operations' }) {

@@ -19,14 +19,14 @@ describe('app overview model', () => {
 
     const model = buildAppOverviewModel(snapshot, { tenantId: 'sollu', role: 'commercial' });
     expect(model.state).toBe('ready');
-    expect(model.cards).toHaveLength(5);
+    expect(model.cards).toHaveLength(6);
     expect(model.cards[0].value).toBe(1);
     expect(model.sections[0].title).toBe('Prioridades de hoje');
     expect(model.sections.find((section) => section.id === 'crm').items[0].actions[0].id).toBe('crm.advance-proposal');
     expect(model.sections.find((section) => section.id === 'billing').items[0].actions[0].id).toBe('billing.collect');
     expect(model.sections.find((section) => section.id === 'quality-gates').items[0].actions).toHaveLength(2);
     expect(model.sections.find((section) => section.id === 'operations').items[0].title).toBe('followup.dispatched');
-    expect(model.sections.find((section) => section.id === 'priorities').items).toHaveLength(3);
+    expect(model.sections.find((section) => section.id === 'priorities').items).toHaveLength(4);
     expect(model.sections.map((section) => section.id)).toEqual([
       'priorities',
       'crm',
@@ -38,7 +38,7 @@ describe('app overview model', () => {
       'operations-timeline'
     ]);
     expect(model.roleLabel).toBe('Comercial');
-    expect(model.tenantOptions.map((tenant) => tenant.id)).toEqual(['sollu', 'amp213', 'bica']);
+    expect(model.tenantOptions.map((tenant) => tenant.id)).toEqual(['sollu', 'amp213', 'bica', 'pessoal']);
     expect(model.recommendationInsights.executions).toBe(0);
   });
 
@@ -101,7 +101,7 @@ describe('app overview model', () => {
 
     const model = buildAppOverviewModel(snapshot, { tenantId: 'sollu', role: 'ceo' });
     expect(model.roleLabel).toBe('CEO');
-    expect(model.cards.map((c) => c.id)).toEqual(['receivables', 'quality-gates', 'events', 'operations']);
+    expect(model.cards.map((c) => c.id)).toEqual(['receivables', 'quality-gates', 'events', 'operations', 'tasks']);
     expect(model.sections.map((s) => s.id)).toEqual([
       'priorities',
       'billing',

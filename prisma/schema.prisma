@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Role: CEO, OPERATOR, COMMERCIAL, FINANCIAL
+// TaskStatus: PENDING, COMPLETED, CANCELLED
+// Priority: LOW, NORMAL, HIGH
+// StatusCockpit: HOJE, DECIDIR, DELEGAR, QUARENTENA
+
+model Tenant {
+  id           String        @id @default(uuid())
+  name         String
+  slug         String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  users        User[]
+  tasks        Task[]
+  leads        Lead[]
+  receivables  Receivable[]
+  gates        Gate[]
+  reservations Reservation[]
+  members      Member[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("OPERATOR")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  status          String   @default("PENDING")
+  priority        String   @default("NORMAL")
+  statusCockpit   String   @default("QUARENTENA")
+  movimentoMinimo String?
+  dueDate         DateTime?
+  effort          Int?
+  impact          Int?
+  return          Int?
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  name      String
+  status    String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Receivable {
+  id           String   @id @default(uuid())
+  customerName String
+  amount       Decimal
+  dueDate      DateTime
+  status       String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Gate {
+  id        String   @id @default(uuid())
+  flowName  String
+  stepName  String
+  status    String
+  reason    String?
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reservation {
+  id           String   @id @default(uuid())
+  customerName String
+  date         DateTime
+  partySize    Int
+  status       String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  status    String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
