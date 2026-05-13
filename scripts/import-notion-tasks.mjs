@@ -1,129 +1,298 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import http from 'node:http';
+import { createClient } from '@supabase/supabase-js'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, '..');
-const CSV_PATH = path.join(ROOT_DIR, 'Tarefas mapeadas no notion/Tarefas 0fc73fa6ae2683e1891381d7ff045495.csv');
-const API_URL = 'http://localhost:3001/api/v1/tasks'; // Using port 3001 for API
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-function parseCSVLine(line) {
-  const fields = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      inQuotes = !inQuotes;
-      continue;
-    }
-    if (c === ',' && !inQuotes) {
-      fields.push(current.trim());
-      current = '';
-      continue;
-    }
-    current += c;
+const supabaseUrl = 'https://anwtivdognjrghipardd.supabase.co'
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFud3RpdmRvZ25qcmdoaXBhcmRkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU0MDI4OSwiZXhwIjoyMDk0MTE2Mjg5fQ.pW2_9g3vY1xH_8kP6jL2mN4qR7tY9zX8cB3vU6sJ0dE'
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false }
+})
+
+const WORKSPACE_ID = '00000000-0000-0000-0000-000000000001'
+
+// Mapping de empresas do Notion para o ID no Supabase
+const COMPANY_MAP = {
+  'sollu': '10000000-0000-0000-0000-000000000001',
+  'bica bar sensorial': '10000000-0000-0000-0000-000000000003',
+  'bica': '10000000-0000-0000-0000-000000000003',
+  'amp213': '10000000-0000-0000-0000-000000000002',
+  'amp 213': '10000000-0000-0000-0000-000000000002',
+  'quental': '10000000-0000-0000-0000-000000000004',
+  'pessoal': null,
+  'pessoal do erick': null,
+  'massa hub': '10000000-0000-0000-0000-000000000005',
+}
+
+// Mapping de status do Notion para o schema do sistema
+const STATUS_MAP = {
+  'a fazer': 'a_fazer',
+  'em andamento': 'em_andamento',
+  'aguardando': 'aguardando',
+  'fechar ciclo': 'fechar_ciclo',
+  'concluído': 'concluido',
+  'concluido': 'concluido',
+  'cancelado': 'cancelado',
+  'standby': 'standby',
+}
+
+// Mapping de "Quando" (prioridade temporal)
+const PRIORITY_MAP = {
+  'hoje': 'urgente',
+  'esta semana': 'alta',
+  'depois': 'baixa',
+  'sem data': 'normal',
+  '🔴 atrasada': 'urgente',
+  '🔵 depois': 'baixa',
+  '🟡 esta semana': 'alta',
+}
+
+// Função para limpar texto
+function cleanText(text) {
+  if (!text) return ''
+  return text.replace(/^"|"$/g, '').trim()
+}
+
+// Função para converter data DD/MM/YYYY para ISO
+function parseDate(dateStr) {
+  if (!dateStr || dateStr === 'Sem data') return null
+  const parts = dateStr.split('/')
+  if (parts.length === 3) {
+    const [day, month, year] = parts
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
   }
-  fields.push(current.trim());
-  return fields;
+  return null
 }
 
-function mapTenant(empresa) {
-  if (empresa.includes('Bica Bar Sensorial')) return 'bica';
-  if (empresa.includes('AMP213')) return 'amp213';
-  if (empresa.includes('Sollu')) return 'sollu';
-  if (empresa.includes('Pessoal')) return 'pessoal';
-  return 'sollu'; // default fallback
-}
-
-function mapPriority(prioridade) {
-  if (prioridade === 'Hoje') return 'high';
-  if (prioridade === 'Depois') return 'low';
-  return 'normal'; // 'Esta semana'
-}
-
-function requestPost(url, data, tenantId) {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const postData = JSON.stringify(data);
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port,
-      path: parsedUrl.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData),
-        'x-tenant-id': tenantId
-      }
-    };
-
-    const req = http.request(options, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(JSON.parse(body || '{}'));
-        } else {
-          reject(new Error(`Status ${res.statusCode}: ${body}`));
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.write(postData);
-    req.end();
-  });
-}
-
-async function run() {
-  console.log('--- Levay OS: Iniciando migração de Tarefas do Notion ---');
+// Função para extrair empresa do texto
+function extractCompany(companyStr) {
+  if (!companyStr) return null
+  const normalized = companyStr.toLowerCase().trim()
   
-  if (!fs.existsSync(CSV_PATH)) {
-    console.error('ERRO: Arquivo CSV não encontrado:', CSV_PATH);
-    process.exit(1);
+  // Verificar mapping direto
+  if (COMPANY_MAP[normalized]) {
+    return COMPANY_MAP[normalized]
   }
-
-  const raw = fs.readFileSync(CSV_PATH, 'utf8');
-  const lines = raw.replace(/\r/g, '').split('\n').filter(l => l.trim());
-  const header = parseCSVLine(lines[0]);
   
-  const tasks = [];
+  // Tentar match parcial
+  for (const [key, value] of Object.entries(COMPANY_MAP)) {
+    if (normalized.includes(key)) {
+      return value
+    }
+  }
+  
+  return null
+}
+
+// Função para parsear CSV simples
+function parseCSV(content) {
+  const lines = content.split('\n').filter(line => line.trim())
+  if (lines.length < 2) return []
+  
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
+  const data = []
+  
   for (let i = 1; i < lines.length; i++) {
-    const fields = parseCSVLine(lines[i]);
-    const obj = {};
-    header.forEach((h, idx) => obj[h] = fields[idx] || '');
-    if (obj.Tarefa) {
-      tasks.push(obj);
+    const values = []
+    let current = ''
+    let inQuotes = false
+    
+    for (const char of lines[i]) {
+      if (char === '"') {
+        inQuotes = !inQuotes
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim())
+        current = ''
+      } else {
+        current += char
+      }
+    }
+    values.push(current.trim())
+    
+    const row = {}
+    headers.forEach((header, index) => {
+      row[header] = values[index] || ''
+    })
+    
+    if (row.Tarefa && row.Tarefa.trim()) {
+      data.push(row)
     }
   }
-
-  console.log(`Encontradas ${tasks.length} tarefas no CSV.`);
-  let successCount = 0;
-  let failCount = 0;
-
-  for (const t of tasks) {
-    const tenantId = mapTenant(t.Empresa);
-    const payload = {
-      title: t.Tarefa,
-      priority: mapPriority(t['Prioridade saudável']),
-      dueDate: t.Prazo,
-      block: t.Bloco
-    };
-
-    try {
-      await requestPost(API_URL, payload, tenantId);
-      successCount++;
-    } catch (err) {
-      console.error(`Falha ao injetar tarefa: "${t.Tarefa}" - ${err.message}`);
-      failCount++;
-    }
-  }
-
-  console.log('--- Migração Concluída ---');
-  console.log(`✅ Sucesso: ${successCount}`);
-  console.log(`❌ Falha: ${failCount}`);
+  
+  return data
 }
 
-run().catch(console.error);
+// Função para criar tarefa no Supabase
+async function importTask(taskData) {
+  const companyId = extractCompany(taskData.Empresa || taskData['🏢 Empresa'])
+  
+  // Mapear status
+  let status = 'a_fazer'
+  const statusStr = taskData.Status || ''
+  for (const [key, value] of Object.entries(STATUS_MAP)) {
+    if (statusStr.toLowerCase().includes(key)) {
+      status = value
+      break
+    }
+  }
+  
+  // Mapear prioridade do "Quando"
+  const whenStr = taskData.Quando || ''
+  let priority = 'normal'
+  for (const [key, value] of Object.entries(PRIORITY_MAP)) {
+    if (whenStr.toLowerCase().includes(key.toLowerCase())) {
+      priority = value
+      break
+    }
+  }
+  
+  // Determinar movimento mínimo
+  const movimentoMinimo = taskData['Movimento mínimo'] || taskData['Notas'] || ''
+  
+  // Determinar o dono
+  const dono = cleanText(taskData.Dono || taskData.Dono)
+  
+  // Determinar tipo (bloco)
+  const tipo = cleanText(taskData.Bloco || taskData['OPCIONAL — Bloco'] || '')
+  
+  // Esforço
+  const effortStr = taskData['Esforço'] || taskData['OPCIONAL — Estimativa (h)'] || ''
+  const effort = effortStr ? parseInt(effortStr) : null
+  
+  // Criar registro
+  const record = {
+    workspace_id: WORKSPACE_ID,
+    title: cleanText(taskData.Tarefa),
+    description: movimentoMinimo || null,
+    status: status,
+    priority: priority,
+    company_id: companyId,
+    minimum_movement: movimentoMinimo || null,
+    due_date: parseDate(taskData.Prazo),
+    tags: JSON.stringify([dono, tipo].filter(Boolean)),
+    effort_hours: effort,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  
+  // Filtrar valores nulos
+  Object.keys(record).forEach(key => {
+    if (record[key] === null || record[key] === undefined) {
+      delete record[key]
+    }
+  })
+  
+  return record
+}
+
+// Função principal de importação
+async function importFromCSV(filePath, sourceName) {
+  console.log(`\n📥 Importando ${sourceName}...`)
+  console.log('─'.repeat(50))
+  
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8')
+    const tasks = parseCSV(content)
+    
+    console.log(`   Total de registros encontrados: ${tasks.length}`)
+    
+    let imported = 0
+    let skipped = 0
+    let errors = 0
+    
+    for (const task of tasks) {
+      try {
+        const record = await importTask(task)
+        
+        // Verificar se já existe (por título + workspace)
+        const { data: existing } = await supabase
+          .from('tasks')
+          .select('id')
+          .eq('workspace_id', WORKSPACE_ID)
+          .eq('title', record.title)
+          .limit(1)
+        
+        if (existing && existing.length > 0) {
+          skipped++
+          continue
+        }
+        
+        const { error } = await supabase
+          .from('tasks')
+          .insert(record)
+        
+        if (error) {
+          console.log(`   ⚠️ Erro: ${error.message}`)
+          errors++
+        } else {
+          imported++
+        }
+      } catch (e) {
+        errors++
+      }
+    }
+    
+    console.log(`   ✅ Importadas: ${imported}`)
+    console.log(`   ⏭️  Puladas (já existiam): ${skipped}`)
+    console.log(`   ❌ Erros: ${errors}`)
+    
+    return { imported, skipped, errors }
+  } catch (e) {
+    console.log(`   ❌ Erro ao ler arquivo: ${e.message}`)
+    return { imported: 0, skipped: 0, errors: 1 }
+  }
+}
+
+// Main
+async function main() {
+  console.log('🚀 Iniciando importação de tarefas do Notion')
+  console.log('='.repeat(50))
+  
+  const basePath = path.join(__dirname, '..', 'export-notion-total', 'Particular e Compartilhado')
+  
+  const results = {
+    total: { imported: 0, skipped: 0, errors: 0 }
+  }
+  
+  // 1. Tarefas do LEVAY OS (Erick)
+  const levayTasksPath = path.join(basePath, 'SISTEMA → Gabriel Quental', 'Produtos para Clientes', 'LEVAY OS', 'Tarefas 0fc73fa6ae2683e1891381d7ff045495.csv')
+  if (fs.existsSync(levayTasksPath)) {
+    const r1 = await importFromCSV(levayTasksPath, 'Tarefas LEVAY OS (Erick)')
+    results.total.imported += r1.imported
+    results.total.skipped += r1.skipped
+    results.total.errors += r1.errors
+  }
+  
+  // 2. Minhas Tarefas (Gabriel)
+  const minhasTarefasPath = path.join(basePath, 'Minhas Tarefas 5893f8c0e9584827b0049f5dff8ed284_all.csv')
+  if (fs.existsSync(minhasTarefasPath)) {
+    const r2 = await importFromCSV(minhasTarefasPath, 'Minhas Tarefas (Gabriel)')
+    results.total.imported += r2.imported
+    results.total.skipped += r2.skipped
+    results.total.errors += r2.errors
+  }
+  
+  console.log('\n' + '='.repeat(50))
+  console.log('📊 RESUMO TOTAL')
+  console.log('─'.repeat(50))
+  console.log(`   Total importado: ${results.total.imported}`)
+  console.log(`   Total pulado: ${results.total.skipped}`)
+  console.log(`   Total erros: ${results.total.errors}`)
+  console.log('='.repeat(50))
+  
+  // Mostrar tarefas importadas
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id, title, status, company_id')
+    .eq('workspace_id', WORKSPACE_ID)
+    .order('created_at', { ascending: false })
+    .limit(10)
+  
+  console.log('\n📋 Últimas tarefas importadas:')
+  tasks?.forEach(t => console.log(`   - ${t.title?.substring(0, 50)}... [${t.status}]`))
+}
+
+main().catch(console.error)

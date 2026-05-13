@@ -2,6 +2,8 @@ import { APP_SCREEN_CSS } from './app-screen-template.js';
 import { COCKPIT_CSS } from './cockpit-template.js';
 
 const BASE_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap');
+
 :root {
   --semantic-color-background-canvas: #121314;
   --semantic-color-background-surface: #1b1d1f;
@@ -14,8 +16,6 @@ const BASE_CSS = `
   --core-color-warning-500: #d6b15a;
   --core-color-error-500: #c26152;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap');
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
