@@ -524,18 +524,21 @@ model DevolutivaSessao {
 
 ## ✅ CHECKLIST DE VALIDAÇÃO
 
-- [ ] Confirmar cap "Hoje" (3 ou 4)
-- [ ] Confirmar paleta de cores final
-- [ ] Confirmar modelo Bica+AMP (cluster vs separado)
-- [ ] Confirmar porta de entrada (Mesa vs HOME)
-- [ ] Confirmar responsável WhatsApp Sollu
-- [ ] Executar Migration #1 (schema completo)
-- [ ] Executar Migration #2 (campos pergunta-bloqueio)
-- [ ] Implementar workflow capture/triage
-- [ ] Implementar UI Mesa do Diretor
-- [ ] Instrumentar KPIs
-- [ ] Implementar integração Whascale
-- [ ] Implementar Apple Reminders sync
+Sprint Foundation v1.1 (2026-05-13 — implementação) aplicou defaults revogáveis para as 5 contradições via tabela `workspace_config`. Mudança = 1 UPDATE, não code change. Confirmações ficam abertas mas não bloqueiam evolução.
+
+- [x] Cap "Hoje" — default **3** aplicado em `workspace_config.cap_hoje`
+- [x] Paleta de cores — default **'legado'** aplicado em `workspace_config.palette_version`
+- [x] Modelo Bica+AMP — **2 empresas separadas com `cluster='bica+amp'`** aplicado em `companies.cluster`
+- [x] Porta de entrada — **'/mesa'** (middleware já redireciona)
+- [ ] Confirmar responsável WhatsApp Sollu (não bloqueia)
+- [x] Migration #1 (schema completo) — 6 migrations aplicadas em prod (v1_1_010 a v1_1_060). Ver [[../.memory/decisions/sprint-foundation-v1.1-2026-05-13.md]]
+- [x] **EXTRA (não estava no plano):** Migration v1_1_070 fechou vulnerabilidade crítica de RLS em 8 tabelas core
+- [ ] Migration #2 (campos pergunta-bloqueio) — adiada para v1.2
+- [ ] Workflow capture/triage com SLA 48h — adiado
+- [x] UI Mesa do Diretor — atualizada para usar `getCapHoje()` + incluir lacunas no Alertas
+- [ ] KPIs instrumentados — adiado
+- [ ] Integração Whascale — adiada para Fase 4 do roadmap
+- [ ] Apple Reminders sync — adiada para Fase 2 do roadmap
 
 ---
 
