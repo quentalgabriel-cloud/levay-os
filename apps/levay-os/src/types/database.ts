@@ -337,9 +337,11 @@ export type Database = {
           profile_data: Json | null
           rg: string | null
           role: string | null
+          status_employment: string | null
           uniform_size: string | null
           updated_at: string
           user_id: string | null
+          vinculo: string | null
           whatsapp: string | null
           workspace_id: string
         }
@@ -365,9 +367,11 @@ export type Database = {
           profile_data?: Json | null
           rg?: string | null
           role?: string | null
+          status_employment?: string | null
           uniform_size?: string | null
           updated_at?: string
           user_id?: string | null
+          vinculo?: string | null
           whatsapp?: string | null
           workspace_id: string
         }
@@ -393,9 +397,11 @@ export type Database = {
           profile_data?: Json | null
           rg?: string | null
           role?: string | null
+          status_employment?: string | null
           uniform_size?: string | null
           updated_at?: string
           user_id?: string | null
+          vinculo?: string | null
           whatsapp?: string | null
           workspace_id?: string
         }
@@ -418,43 +424,76 @@ export type Database = {
       }
       companies: {
         Row: {
+          anti_publico: string | null
+          cluster: string | null
           color: string | null
+          compartilha_cozinha_com: string | null
+          compartilha_predio_com: string | null
           created_at: string
           dna: Json | null
+          dna_oneliner: string | null
+          escopo: string | null
           icon: string | null
           id: string
           legacy_notion_id: string | null
           name: string
+          promessa: string | null
+          principal_desafio: string | null
+          principal_oportunidade: string | null
+          proximo_marco: string | null
           slug: string
           tagline: string | null
+          tom_voz: string | null
           type: string | null
           updated_at: string
           workspace_id: string
         }
         Insert: {
+          anti_publico?: string | null
+          cluster?: string | null
           color?: string | null
+          compartilha_cozinha_com?: string | null
+          compartilha_predio_com?: string | null
           created_at?: string
           dna?: Json | null
+          dna_oneliner?: string | null
+          escopo?: string | null
           icon?: string | null
           id?: string
           legacy_notion_id?: string | null
           name: string
+          promessa?: string | null
+          principal_desafio?: string | null
+          principal_oportunidade?: string | null
+          proximo_marco?: string | null
           slug: string
           tagline?: string | null
+          tom_voz?: string | null
           type?: string | null
           updated_at?: string
           workspace_id: string
         }
         Update: {
+          anti_publico?: string | null
+          cluster?: string | null
           color?: string | null
+          compartilha_cozinha_com?: string | null
+          compartilha_predio_com?: string | null
           created_at?: string
           dna?: Json | null
+          dna_oneliner?: string | null
+          escopo?: string | null
           icon?: string | null
           id?: string
           legacy_notion_id?: string | null
           name?: string
+          promessa?: string | null
+          principal_desafio?: string | null
+          principal_oportunidade?: string | null
+          proximo_marco?: string | null
           slug?: string
           tagline?: string | null
+          tom_voz?: string | null
           type?: string | null
           updated_at?: string
           workspace_id?: string
@@ -745,6 +784,169 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lacunas: {
+        Row: {
+          bloqueia: string | null
+          contexto: string | null
+          created_at: string
+          dono_collaborator_id: string | null
+          empresa_id: string | null
+          id: string
+          impacto: string
+          proximo_movimento: string | null
+          resolvida_em: string | null
+          status: string
+          titulo: string
+          tipo: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          bloqueia?: string | null
+          contexto?: string | null
+          created_at?: string
+          dono_collaborator_id?: string | null
+          empresa_id?: string | null
+          id?: string
+          impacto?: string
+          proximo_movimento?: string | null
+          resolvida_em?: string | null
+          status?: string
+          titulo: string
+          tipo?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          bloqueia?: string | null
+          contexto?: string | null
+          created_at?: string
+          dono_collaborator_id?: string | null
+          empresa_id?: string | null
+          id?: string
+          impacto?: string
+          proximo_movimento?: string | null
+          resolvida_em?: string | null
+          status?: string
+          titulo?: string
+          tipo?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lacunas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lacunas_company_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lacunas_dono_collaborator_id_fkey"
+            columns: ["dono_collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+          workspace_id: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+          workspace_id: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_config_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alocacoes: {
+        Row: {
+          cargo: string
+          collaborator_id: string
+          company_id: string
+          created_at: string
+          fim: string | null
+          id: string
+          inicio: string
+          responsavel_substituto_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          cargo: string
+          collaborator_id: string
+          company_id: string
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string
+          responsavel_substituto_id?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          cargo?: string
+          collaborator_id?: string
+          company_id?: string
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string
+          responsavel_substituto_id?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alocacoes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1342,6 +1544,7 @@ export type Database = {
           blocking: string | null
           company_id: string | null
           created_at: string
+          foco_trimestral: string | null
           health_score: number | null
           id: string
           legacy_notion_id: string | null
@@ -1360,6 +1563,7 @@ export type Database = {
           blocking?: string | null
           company_id?: string | null
           created_at?: string
+          foco_trimestral?: string | null
           health_score?: number | null
           id?: string
           legacy_notion_id?: string | null
@@ -1378,6 +1582,7 @@ export type Database = {
           blocking?: string | null
           company_id?: string | null
           created_at?: string
+          foco_trimestral?: string | null
           health_score?: number | null
           id?: string
           legacy_notion_id?: string | null
