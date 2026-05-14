@@ -8,6 +8,7 @@
     "test": "npm run test --workspace @levay/api && npm run test --workspace @levay/web && npm run test --workspace @levay/workers",
     "lint": "node scripts/run-gate-checks.mjs lint",
     "typecheck": "node scripts/run-gate-checks.mjs typecheck",
+    "postinstall": "prisma generate",
     "build": "node scripts/run-gate-checks.mjs build",
     "smoke": "node scripts/run-stack-smoke.mjs",
     "health": "sh squads/levay-sollu-execution/scripts/run-squad-health.sh",

@@ -28,7 +28,7 @@ confidence: high
 - **Natureza**: Bar de cocktails premium em Recife
 - **Ticket alto**: Experiências sensoriais
 - **Operação compartilhada com AMP 213**
-- **Reservas**: Max 70 pessoas
+- **Reservas**: Max 65 pessoas (dado atualizado em 2026-05-13: "65 pessoas sentadas minimamente confortáveis")
 - **Estados de mesa**: livre | reservada | ocupada | no-show
 - **Features**: Fila de espera com promoção automática
 - **Concorrência**: Handle para evitar overbooking

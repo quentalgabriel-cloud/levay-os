@@ -101,12 +101,14 @@ confidence: high
 
 ## Tenant Slugs
 
-| Tenant | Slug |
-|--------|------|
-| Grupo Holding | `holding` |
-| Sollu | `sollu` |
-| AMP 213 | `amp213` |
-| Bica Bar | `bicabar` |
+| Tenant | Slug | Lotação Máxima | Observação |
+|--------|------|----------------|------------|
+| Grupo Holding | `holding` | — | Workspace raiz |
+| Sollu | `sollu` | — | Totalmente isolado |
+| AMP 213 | `amp213` | — | Eventos, buffet |
+| Bica Bar | `bicabar` | **65 pessoas** | Speakeasy 2º piso (referência anterior: 70) |
+
+> ⚠️ **Nota**: Lotação do Bica Bar foi corrigida para 65 pessoas sentadas "minimamente confortáveis" — dado confirmado em sessão 2026-05-13.
 
 ## Source (Leads)
 
