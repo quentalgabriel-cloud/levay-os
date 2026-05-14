@@ -11,7 +11,7 @@ const FORMATS = ['open', 'taken', 'archived'] as const
 
 const decisionInputSchema = z.object({
   title: z.string().trim().min(1, 'Título da decisão é obrigatório'),
-  practical_change: z.string().trim().min(1, 'O que muda na prática é obrigatório'),
+  practical_change: z.string().trim().min(1, 'O que muda na prática é obrigatório — preencha ou use "[pendente]" como rascunho'),
   context: z.string().trim().optional().or(z.literal('')),
   alternatives: z.string().trim().optional().or(z.literal('')),
   expected_outcome: z.string().trim().optional().or(z.literal('')),

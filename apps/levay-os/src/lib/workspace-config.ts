@@ -1,5 +1,4 @@
 import 'server-only'
-import { cache } from 'react'
 import { createClient } from './supabase/server'
 import { getWorkspaceContext } from './tenant-context'
 
@@ -14,7 +13,8 @@ export type WorkspaceConfigKey = keyof typeof CONFIG_DEFAULTS
 
 type ConfigValue<K extends WorkspaceConfigKey> = typeof CONFIG_DEFAULTS[K]
 
-export const getAllWorkspaceConfig = cache(async (): Promise<Record<string, unknown>> => {
+// No caching - each request must fetch fresh config for current workspace
+export async function getAllWorkspaceConfig(): Promise<Record<string, unknown>> {
   const supabase = await createClient()
   const { workspaceId } = await getWorkspaceContext(supabase)
 
@@ -33,7 +33,7 @@ export const getAllWorkspaceConfig = cache(async (): Promise<Record<string, unkn
     map[row.key] = row.value
   }
   return map
-})
+}
 
 export async function getWorkspaceConfig<K extends WorkspaceConfigKey>(key: K): Promise<ConfigValue<K>> {
   const all = await getAllWorkspaceConfig()

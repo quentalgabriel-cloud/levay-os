@@ -146,16 +146,21 @@ export async function bulkCreateCompanies(companies: { name: string; color?: str
   const supabase = await createClient()
   const { workspaceId } = await getWorkspaceContext(supabase)
 
-  const toInsert = companies.map(c => ({
-    name: c.name.trim(),
-    slug: c.name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-    color: c.color || '#6b7280',
-    workspace_id: workspaceId,
-  }))
+  const toInsert = companies.map(c => {
+    const slug = c.name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    return {
+      name: c.name.trim(),
+      slug,
+      color: c.color || '#6b7280',
+      workspace_id: workspaceId,
+    }
+  })
 
+  // Use upsert on unique constraint: workspace_id + slug
+  // This prevents duplicate slugs within same workspace
   const { data, error } = await supabase
     .from('companies')
-    .upsert(toInsert, { onConflict: 'name,workspace_id' })
+    .upsert(toInsert, { onConflict: 'workspace_id_slug_key' })
     .select()
 
   if (error) {
