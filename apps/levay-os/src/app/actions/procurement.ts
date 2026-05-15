@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getWorkspaceContext } from '@/lib/tenant-context'
+import { getProcurementExceptionThreshold } from '@/lib/workspace-config'
 import { revalidatePath } from 'next/cache'
 
 export interface ProcurementItemInput {
@@ -45,6 +46,12 @@ export async function createProcurementRequest(input: CreateProcurementInput) {
     0
   )
 
+  const exceptionThreshold = await getProcurementExceptionThreshold()
+  const exception_flagged = estimated_total > 0 && estimated_total > exceptionThreshold
+  const exception_reason = exception_flagged
+    ? `Total estimado R$ ${estimated_total.toFixed(2)} acima do teto de R$ ${exceptionThreshold.toFixed(2)}`
+    : null
+
   const { data: request, error: reqError } = await db
     .from('procurement_requests')
     .insert({
@@ -56,6 +63,8 @@ export async function createProcurementRequest(input: CreateProcurementInput) {
       requested_by: userId,
       idempotency_key: input.idempotency_key,
       estimated_total: estimated_total > 0 ? estimated_total : null,
+      exception_flagged,
+      exception_reason,
     })
     .select('id')
     .single()

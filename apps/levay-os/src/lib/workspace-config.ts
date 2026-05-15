@@ -7,6 +7,8 @@ const CONFIG_DEFAULTS = {
   palette_version: 'legado' as string,
   bica_amp_cluster_id: 'bica+amp' as string,
   entry_route: '/mesa' as string,
+  // Compras: valor estimado acima deste teto (R$) dispara exception_flagged
+  procurement_exception_threshold: 500 as number,
 } as const
 
 export type WorkspaceConfigKey = keyof typeof CONFIG_DEFAULTS
@@ -56,4 +58,10 @@ export async function getPaletteVersion(): Promise<string> {
 
 export async function getEntryRoute(): Promise<string> {
   return getWorkspaceConfig('entry_route')
+}
+
+export async function getProcurementExceptionThreshold(): Promise<number> {
+  const raw = await getWorkspaceConfig('procurement_exception_threshold')
+  const parsed = typeof raw === 'number' ? raw : parseFloat(String(raw))
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : CONFIG_DEFAULTS.procurement_exception_threshold
 }
