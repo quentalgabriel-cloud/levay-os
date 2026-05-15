@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "apps/levay-os/package.json", "use": "@vercel/next" }
+  ]
+}

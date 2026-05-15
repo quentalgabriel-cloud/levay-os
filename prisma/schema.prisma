@@ -7,63 +7,184 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Role: CEO, OPERATOR, COMMERCIAL, FINANCIAL
-// TaskStatus: PENDING, COMPLETED, CANCELLED
-// Priority: LOW, NORMAL, HIGH
-// StatusCockpit: HOJE, DECIDIR, DELEGAR, QUARENTENA
+// ═══════════════════════════════════════════════════════════════════════════
+// TENANT & MULTI-TENANCY
+// ═══════════════════════════════════════════════════════════════════════════
 
 model Tenant {
-  id           String        @id @default(uuid())
-  name         String
-  slug         String        @unique
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  users        User[]
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // holding | sollu | amp213 | bicabar
+  isActive  Boolean  @default(true)
+  metadata  Json?    // Additional tenant-specific configuration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users        UserTenantRole[]
   tasks        Task[]
   leads        Lead[]
   receivables  Receivable[]
   gates        Gate[]
   reservations Reservation[]
   members      Member[]
+  auditLogs    AuditLog[]
+  
+  @@index([slug])
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTHENTICATION & USER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Roles enum
+enum Role {
+  CEO
+  ADMIN
+  OPERATOR
+  COMMERCIAL
+  FINANCIAL
+}
+
+// User model - uses Supabase Auth, this is the profile linked to auth.users
 model User {
+  id           String   @id @default(uuid()) // Maps to auth.users.id
+  email        String   @unique
+  name         String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  tenantRoles  UserTenantRole[]
+  auditLogs    AuditLog[]
+  
+  @@index([email])
+  @@index([isActive])
+}
+
+// Junction table for user-tenant-role association (Many-to-Many)
+model UserTenantRole {
   id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  role      String   @default("OPERATOR")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String
   tenantId  String
+  role      Role     @default(OPERATOR)
+  isDefault Boolean  @default(false) // Default tenant when user has multiple
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+  @@index([role])
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUDIT LOGGING
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum AuditAction {
+  // User management
+  USER_CREATE
+  USER_UPDATE
+  USER_DELETE
+  USER_ROLE_ASSIGN
+  USER_ROLE_REVOKE
+  
+  // Tenant management
+  TENANT_CREATE
+  TENANT_UPDATE
+  TENANT_ARCHIVE
+  
+  // Auth events
+  AUTH_LOGIN
+  AUTH_LOGOUT
+  AUTH_SESSION_REFRESH
+  AUTH_PASSWORD_CHANGE
+  
+  // Resource operations
+  TASK_CREATE
+  TASK_UPDATE
+  TASK_DELETE
+  LEAD_CREATE
+  LEAD_UPDATE
+  LEAD_DELETE
+  RECEIVABLE_CREATE
+  RECEIVABLE_UPDATE
+  RECEIVABLE_DELETE
+}
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  userId       String?     // Optional - audit can exist without user reference
+  tenantId     String
+  action       AuditAction
+  resourceType String      // e.g., 'user', 'tenant', 'task', 'lead'
+  resourceId   String?
+  details      Json?       // Additional context about the action
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime    @default(now())
+  
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([tenantId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([resourceId])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BUSINESS ENTITIES (all with mandatory tenant_id for isolation)
+// ═══════════════════════════════════════════════════════════════════════════
 
 model Task {
   id              String   @id @default(uuid())
   title           String
   description     String?
-  status          String   @default("PENDING")
-  priority        String   @default("NORMAL")
-  statusCockpit   String   @default("QUARENTENA")
-  movimentoMinimo String?
+  status          String   @default("PENDING")   // PENDING | EM_ANDAMENTO | COMPLETED | CANCELLED
+  priority        String   @default("NORMAL")   // LOW | NORMAL | HIGH
+  statusCockpit   String   @default("QUARENTENA") // HOJE | DECIDIR | DELEGAR | QUARENTENA
+  movimentoMinimo String?  // Required field per vocabulary
   dueDate         DateTime?
   effort          Int?
   impact          Int?
-  return          Int?
-  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  returnValue     Int?     // Renamed from 'return' to avoid SQL keyword
   tenantId        String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([statusCockpit])
+  @@index([priority])
+  @@index([dueDate])
 }
 
 model Lead {
-  id        String   @id @default(uuid())
-  name      String
-  status    String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  tenantId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  email        String?
+  phone        String?
+  company      String?
+  source       String?  // organic | referral | ads | cold
+  status       String   @default("NOVO") // NOVO | CONTATADO | QUALIFICADO | NEGOCIANDO | GANHO | PERDIDO
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([source])
 }
 
 model Receivable {
@@ -71,44 +192,124 @@ model Receivable {
   customerName String
   amount       Decimal
   dueDate      DateTime
-  status       String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  tenantId  String
+  paidDate     DateTime?
+  status       String   @default("PENDING") // PENDING | PAID | OVERDUE | CANCELLED
+  description  String?
+  tenantId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([dueDate])
 }
 
 model Gate {
   id        String   @id @default(uuid())
-  flowName  String
-  stepName  String
-  status    String
+  flowName  String   // e.g., 'lead_quality', 'invoice_approval'
+  stepName  String   // e.g., 'initial_review', 'final_approval'
+  status    String   // PENDING | APPROVED | REJECTED
   reason    String?
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
   tenantId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([flowName])
+  @@index([status])
 }
 
 model Reservation {
   id           String   @id @default(uuid())
   customerName String
+  customerPhone String?
   date         DateTime
   partySize    Int
-  status       String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  tenantId  String
+  status       String   @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED
+  notes        String?
+  tenantId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([date])
 }
 
 model Member {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
-  status    String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  phone     String?
+  role      String?  // e.g., 'Bartender', 'Manager', 'Chef'
+  status    String   @default("ACTIVE") // ACTIVE | INACTIVE
   tenantId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([email])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LEVAI MEMORY SYSTEM — Obsidian-like Knowledge Graph
+// ═══════════════════════════════════════════════════════════════════════════
+
+model MemoryEntry {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  type        String    @default("note") // note | decision | context | reference | task-insight
+  tags        String    @default("[]") // JSON array stored as string
+  links       String    @default("[]") // JSON array of linked memory IDs
+  source      String?   // file path or source of this knowledge
+  confidence  Int       @default(5) // 1-10: how confident this info is correct
+  tenantId    String?   // optional: if knowledge is tenant-specific
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastRecalled DateTime?
+
+  @@index([type])
+  @@index([createdAt])
+  @@index([lastRecalled])
+}
+
+model MemoryLink {
+  id           String   @id @default(cuid())
+  fromMemoryId String
+  toMemoryId    String
+  linkType      String   @default("related") // related | blocks | extends |反驳
+  weight        Int      @default(1) // link strength 1-10
+  createdAt     DateTime @default(now())
+
+  @@unique([fromMemoryId, toMemoryId])
+  @@index([fromMemoryId])
+  @@index([toMemoryId])
+}
+
+model MemorySession {
+  id          String   @id @default(cuid())
+  projectSlug  String   @default("sistemainterno-grupo-levay")
+  sessionId    String   @unique
+  summary      String
+  leftOff      String?
+  nextSteps    String   @default("[]") // JSON array
+  decisions    String   @default("[]") // JSON array of {what, why}
+  blockers     String   @default("[]") // JSON array
+  goal         String?
+  tasks        String   @default("[]") // JSON array of task objects
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectSlug])
+  @@index([createdAt])
 }

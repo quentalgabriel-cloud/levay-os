@@ -8,9 +8,16 @@
     "test": "npm run test --workspace @levay/api && npm run test --workspace @levay/web && npm run test --workspace @levay/workers",
     "lint": "node scripts/run-gate-checks.mjs lint",
     "typecheck": "node scripts/run-gate-checks.mjs typecheck",
+    "postinstall": "prisma generate",
     "build": "node scripts/run-gate-checks.mjs build",
     "smoke": "node scripts/run-stack-smoke.mjs",
-    "health": "sh squads/levay-sollu-execution/scripts/run-squad-health.sh"
+    "health": "sh squads/levay-sollu-execution/scripts/run-squad-health.sh",
+    "status": "node scripts/cli/observability.mjs",
+    "status:health": "node scripts/cli/observability.mjs health",
+    "status:metrics": "node scripts/cli/observability.mjs metrics",
+    "setup": "node scripts/setup/check-env.js",
+    "setup:init": "npm install && cp .env.example .env && npx prisma db push",
+    "db:reset": "npx prisma db push --force-reset"
   },
   "workspaces": [
     "apps/*",
@@ -20,6 +27,7 @@
     "prisma": "^6.19.3"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@prisma/client": "^6.19.3",
+    "@vercel/sandbox": "^1.10.2"
   }
 }

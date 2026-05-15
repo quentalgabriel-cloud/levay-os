@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      target: builder
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - ENABLE_AUTH=false
+      - ENABLE_RATE_LIMIT=false
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/v1/operations/events/summary?tenantId=sollu"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - levay-network
+
+  web:
+    build:
+      context: .
+      target: builder
+    ports:
+      - "3201:3201"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:3001
+    depends_on:
+      - api
+    networks:
+      - levay-network
+
+  workers:
+    build:
+      context: .
+      target: builder
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - api
+    networks:
+      - levay-network
+
+networks:
+  levay-network:
+    driver: bridge
