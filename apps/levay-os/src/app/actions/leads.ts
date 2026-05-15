@@ -141,17 +141,37 @@ export async function createLead(input: CreateLeadInput) {
     return { error: error.message, data: null }
   }
 
+  if (data && data.phone) {
+    const offsets = [0, 1, 3]
+    for (const offset of offsets) {
+      const idempotencyKey = `${workspaceId}:${data.id}:D+${offset}`
+      const scheduledAt = new Date(Date.now() + offset * 24 * 60 * 60 * 1000).toISOString()
+      await (supabase as any).from('followup_jobs').upsert({
+        workspace_id: workspaceId,
+        lead_id: data.id,
+        phone: data.phone,
+        offset_days: offset,
+        idempotency_key: idempotencyKey,
+        scheduled_at: scheduledAt,
+        status: 'pending',
+        attempts: 0
+      }, { onConflict: 'workspace_id,idempotency_key' })
+    }
+  }
+
   revalidatePath('/crm/sollu')
   return { data, error: null }
 }
 
 export async function updateLeadStage({ leadId, stageId }: UpdateLeadStageInput) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('crm_leads')
     .update({ stage_id: stageId })
     .eq('id', leadId)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating lead stage:', error)
@@ -164,11 +184,13 @@ export async function updateLeadStage({ leadId, stageId }: UpdateLeadStageInput)
 
 export async function updateLeadStatus(leadId: string, status: LeadStatus) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('crm_leads')
     .update({ status })
     .eq('id', leadId)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating lead status:', error)
@@ -210,11 +232,13 @@ export async function addInteraction({ leadId, type, content }: AddInteractionIn
 
 export async function getLeadInteractions(leadId: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { data, error } = await supabase
     .from('crm_interactions')
     .select('id, type, content, created_at, created_by')
     .eq('lead_id', leadId)
+    .eq('workspace_id', workspaceId)
     .order('created_at', { ascending: false })
 
   if (error) return { error: error.message, data: null }

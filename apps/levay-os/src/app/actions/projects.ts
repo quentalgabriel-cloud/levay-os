@@ -47,6 +47,7 @@ export async function createProject(formData: FormData) {
 
 export async function updateProject(id: string, formData: FormData) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const name = formData.get('name') as string
   const company_id = formData.get('company_id') as string | null
@@ -75,6 +76,7 @@ export async function updateProject(id: string, formData: FormData) {
     .from('projects')
     .update(updates)
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating project:', error)
@@ -89,11 +91,13 @@ export async function updateProject(id: string, formData: FormData) {
 
 export async function deleteProject(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('projects')
     .delete()
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error deleting project:', error)
@@ -108,11 +112,13 @@ export async function deleteProject(id: string) {
 
 export async function archiveProject(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('projects')
     .update({ status: 'arquivado' })
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error archiving project:', error)

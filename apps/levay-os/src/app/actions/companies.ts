@@ -66,6 +66,7 @@ export async function createCompany(formData: FormData) {
 
 export async function updateCompany(id: string, formData: FormData) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const name = formData.get('name') as string
   const slug = formData.get('slug') as string | null
@@ -110,6 +111,7 @@ export async function updateCompany(id: string, formData: FormData) {
     .from('companies')
     .update(updates)
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating company:', error)
@@ -124,11 +126,13 @@ export async function updateCompany(id: string, formData: FormData) {
 
 export async function deleteCompany(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('companies')
     .delete()
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error deleting company:', error)

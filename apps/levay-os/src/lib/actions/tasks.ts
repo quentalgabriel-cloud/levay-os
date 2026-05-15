@@ -112,7 +112,7 @@ export async function processCapture(captureId: string, action: 'task' | 'dismis
         minimum_movement: triage.minimum_movement,
         workspace_id: wsId,
         status: triage.status,
-        block: triage.status_cockpit,
+        block: triage.status_cockpit?.toLowerCase(),
         priority: triage.priority,
         company_id: companyId,
         inbox: triage.status === 'inbox',

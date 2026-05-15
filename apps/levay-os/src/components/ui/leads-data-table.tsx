@@ -15,6 +15,7 @@ export interface Lead {
   interest: number[]
   probability: 'baixo' | 'médio' | 'alto'
   lastAction: string
+  stageId?: string
 }
 
 interface LeadsDataTableProps {

@@ -20,7 +20,7 @@ export default async function ComprasPage() {
   const supabase = await createClient()
   const { workspaceId } = await getWorkspaceContext(supabase)
 
-  const { data: rows } = await (supabase as any)
+  const { data: rows } = await supabase
     .from('procurement_requests')
     .select(`
       id, title, status, needed_by, estimated_total,

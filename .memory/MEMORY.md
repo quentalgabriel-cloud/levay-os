@@ -162,7 +162,7 @@ Links: [[slug-outra-nota]]
 
 ## Índice de Notas
 
-### Decisões (7)
+### Decisões (10)
 
 | Slug | Título | Confiança |
 |------|--------|-----------|
@@ -173,6 +173,17 @@ Links: [[slug-outra-nota]]
 | `sollu-followup-by-origin` | Follow-up por Origem | ✅ Alta |
 | `cli-first-architecture` | CLI-First Architecture | ✅ Alta |
 | `process-generator-cli-first` | Process Generator CLI-First | ✅ Alta |
+| `sequencia-implementacao-funcional-2026-05-14` | Sequência 4 sprints (Compras→Pauta→Retiradas→Janela) | ✅ Alta |
+| `adr-arch-bloqueadoras-2026-05-14` | ADR: migrations raiz + numeric(14,2)+bigint + idempotency UUID | ✅ Alta |
+| `parking-lot-central-financeira` | Parking lot 14 itens deferidos + 13 perguntas Erick | ✅ Alta |
+
+### Sprint 1 — Lista de Compras Digital (godmode 2026-05-14)
+
+- **Story:** `docs/stories/7.1.lista-compras-digital-thaynan.md` (Draft → pronta para implementar)
+- **Migration:** `supabase/migrations/20260514_100_procurement_sprint1.sql` (4 tabelas + view + helper)
+- **Helper money:** `apps/levay-os/src/lib/money.ts` (toCents/toDecimal/formatBRL/sumCents)
+- **Pivô:** Thaynan opera as 3 dores (compras, financeiro, comunicação)
+- **Próximo passo:** T1 — aplicar migration + regenerar types Supabase
 
 ### Contexto (21)
 

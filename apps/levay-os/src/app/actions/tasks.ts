@@ -47,6 +47,7 @@ export async function createTask(formData: FormData) {
 
 export async function updateTask(id: string, formData: FormData) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const title = formData.get('title') as string
   const minimum_movement = formData.get('minimum_movement') as string
@@ -69,6 +70,7 @@ export async function updateTask(id: string, formData: FormData) {
     .from('tasks')
     .update(updates)
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating task:', error)
@@ -83,11 +85,13 @@ export async function updateTask(id: string, formData: FormData) {
 
 export async function deleteTask(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('tasks')
     .delete()
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error deleting task:', error)
@@ -102,11 +106,13 @@ export async function deleteTask(id: string) {
 
 export async function updateTaskStatus(id: string, status: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('tasks')
     .update({ status })
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating task status:', error)
@@ -121,11 +127,13 @@ export async function updateTaskStatus(id: string, status: string) {
 
 export async function bulkUpdateTaskStatus(ids: string[], status: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('tasks')
     .update({ status })
     .in('id', ids)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error bulk updating tasks:', error)

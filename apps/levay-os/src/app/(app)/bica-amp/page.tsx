@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getWorkspaceContext } from '@/lib/tenant-context'
 import { BICA_AMP_CONFIG } from '@/lib/vocabulary'
 import { EventAgenda } from '@/components/ui/event-agenda'
 import type { CalendarEvent } from '@/components/ui/event-agenda'
@@ -146,44 +147,42 @@ function LastActionIndicator({ lastAction, lastActionAt }: {
   )
 }
 
-const WORKSPACE_ID = '00000000-0000-0000-0000-000000000001'
-
-// Mapeamento de slug para ID
-const COMPANY_IDS: Record<string, string> = {
-  'bica': '10000000-0000-0000-0000-000000000003',
-  'amp213': '10000000-0000-0000-0000-000000000002',
-}
-
-async function getCompanyData(companySlug: 'bica' | 'amp213') {
+async function getCompanyData(workspaceId: string, companySlug: 'bica' | 'amp213') {
   const supabase = await createClient()
-  const companyId = COMPANY_IDS[companySlug]
   
-  const [companyRes, tasks, decisions, projects, events] = await Promise.all([
-    supabase.from('companies')
-      .select('*')
-      .eq('workspace_id', WORKSPACE_ID)
-      .eq('slug', companySlug)
-      .single(),
+  const companyRes = await supabase
+    .from('companies')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('slug', companySlug)
+    .maybeSingle()
+  
+  if (!companyRes.data) {
+    return { company: null, tasks: [], decisions: [], projects: [], events: [] }
+  }
+  
+  const companyId = companyRes.data.id
+  const [tasks, decisions, projects, events] = await Promise.all([
     supabase.from('tasks')
       .select('*')
-      .eq('workspace_id', WORKSPACE_ID)
+      .eq('workspace_id', workspaceId)
       .eq('company_id', companyId)
       .order('created_at', { ascending: false }),
     supabase.from('decisions')
       .select('*')
-      .eq('workspace_id', WORKSPACE_ID)
+      .eq('workspace_id', workspaceId)
       .eq('company_id', companyId)
       .eq('format', 'open')
       .order('created_at', { ascending: false }),
     supabase.from('projects')
       .select('*')
-      .eq('workspace_id', WORKSPACE_ID)
+      .eq('workspace_id', workspaceId)
       .eq('company_id', companyId)
       .eq('status', 'ativo')
       .order('created_at', { ascending: false }),
     supabase.from('events')
       .select('*')
-      .eq('workspace_id', WORKSPACE_ID)
+      .eq('workspace_id', workspaceId)
       .eq('company_id', companyId)
       .gte('event_date', new Date().toISOString())
       .order('event_date', { ascending: true })
@@ -200,15 +199,18 @@ async function getCompanyData(companySlug: 'bica' | 'amp213') {
 }
 
 export default async function BicaAmpPage() {
+  const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+
   const [bicaData, ampData] = await Promise.all([
-    getCompanyData('bica'),
-    getCompanyData('amp213'),
+    getCompanyData(workspaceId, 'bica'),
+    getCompanyData(workspaceId, 'amp213'),
   ])
 
   const bicaEvents = mapToCalendarEvents(bicaData.events)
   const ampEvents = mapToCalendarEvents(ampData.events)
-  const createEventBica = createEvent.bind(null, COMPANY_IDS['bica'])
-  const createEventAmp = createEvent.bind(null, COMPANY_IDS['amp213'])
+  const createEventBica = bicaData.company ? createEvent.bind(null, bicaData.company.id) : null
+  const createEventAmp = ampData.company ? createEvent.bind(null, ampData.company.id) : null
   
   const bicaConfig = BICA_AMP_CONFIG.bica
   const ampConfig = BICA_AMP_CONFIG.amp
@@ -236,58 +238,66 @@ export default async function BicaAmpPage() {
           color={bicaConfig.color}
           accent={bicaConfig.accent}
         >
-          <MetricCard 
-            label="Decisões pendentes" 
-            value={pendingDecisionsBica}
-            subtext={pendingDecisionsBica > 0 ? `${pendingDecisionsBica} requerem sua atenção` : 'Tudo decidido'}
-            alert={pendingDecisionsBica > 2}
-          />
-          
-          <MetricCard 
-            label="Projetos ativos" 
-            value={bicaData.projects.length}
-            subtext="em movimento"
-          />
-          
-          <SectionCard title="Movimentos 90d">
-            {bicaData.projects.length > 0 ? (
-              <ul className="space-y-2">
-                {bicaData.projects.slice(0, 3).map((p: any) => (
-                  <li key={p.id} className="text-sm text-gray-700 truncate">
-                    • {p.name || p.title}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState message="Nenhum projeto ativo" />
-            )}
-          </SectionCard>
-          
-          <EventAgenda
-            events={bicaEvents}
-            onAddServer={createEventBica}
-            onRemoveServer={deleteEvent}
-            className="mx-0"
-          />
+          {bicaData.company ? (
+            <>
+              <MetricCard 
+                label="Decisões pendentes" 
+                value={pendingDecisionsBica}
+                subtext={pendingDecisionsBica > 0 ? `${pendingDecisionsBica} requerem sua atenção` : 'Tudo decidido'}
+                alert={pendingDecisionsBica > 2}
+              />
+              
+              <MetricCard 
+                label="Projetos ativos" 
+                value={bicaData.projects.length}
+                subtext="em movimento"
+              />
+              
+              <SectionCard title="Movimentos 90d">
+                {bicaData.projects.length > 0 ? (
+                  <ul className="space-y-2">
+                    {bicaData.projects.slice(0, 3).map((p: any) => (
+                      <li key={p.id} className="text-sm text-gray-700 truncate">
+                        • {p.name || p.title}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState message="Nenhum projeto ativo" />
+                )}
+              </SectionCard>
+              
+              {createEventBica && (
+                <EventAgenda
+                  events={bicaEvents}
+                  onAddServer={createEventBica}
+                  onRemoveServer={deleteEvent}
+                  className="mx-0"
+                />
+              )}
 
-          <SectionCard title="Pessoa-âncora">
-            <AnchorPerson names={bicaConfig.anchor} />
-          </SectionCard>
+              <SectionCard title="Pessoa-âncora">
+                <AnchorPerson names={bicaConfig.anchor} />
+              </SectionCard>
 
-          <SectionCard title="Sistemas">
-            <div className="flex flex-wrap gap-2">
-              {bicaConfig.systems.map((s) => (
-                <SystemBadge key={s} name={s} />
-              ))}
-            </div>
-          </SectionCard>
-          
-          <SectionCard title="Última ação do Erick">
-            <LastActionIndicator 
-              lastAction="decisão" 
-              lastActionAt={lastDecisionBica} 
-            />
-          </SectionCard>
+              <SectionCard title="Sistemas">
+                <div className="flex flex-wrap gap-2">
+                  {bicaConfig.systems.map((s) => (
+                    <SystemBadge key={s} name={s} />
+                  ))}
+                </div>
+              </SectionCard>
+              
+              <SectionCard title="Última ação do Erick">
+                <LastActionIndicator 
+                  lastAction="decisão" 
+                  lastActionAt={lastDecisionBica} 
+                />
+              </SectionCard>
+            </>
+          ) : (
+            <EmptyState message="Empresa não encontrada neste workspace" />
+          )}
         </CompanyColumn>
         
         <CompanyColumn
@@ -352,62 +362,70 @@ export default async function BicaAmpPage() {
           color={ampConfig.color}
           accent={ampConfig.accent}
         >
-          <MetricCard 
-            label="Decisões pendentes" 
-            value={pendingDecisionsAmp}
-            subtext={pendingDecisionsAmp > 0 ? `${pendingDecisionsAmp} requerem sua atenção` : 'Tudo decidido'}
-            alert={pendingDecisionsAmp > 2}
-          />
-          
-          <MetricCard 
-            label="Projetos ativos" 
-            value={ampData.projects.length}
-            subtext="em movimento"
-          />
-          
-          <SectionCard title="Movimentos 90d">
-            {ampData.projects.length > 0 ? (
-              <ul className="space-y-2">
-                {ampData.projects.slice(0, 3).map((p: any) => (
-                  <li key={p.id} className="text-sm text-gray-700 truncate">
-                    • {p.name || p.title}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState message="Nenhum projeto ativo" />
-            )}
-          </SectionCard>
-          
-          <EventAgenda
-            events={ampEvents}
-            onAddServer={createEventAmp}
-            onRemoveServer={deleteEvent}
-            className="mx-0"
-          />
+          {ampData.company ? (
+            <>
+              <MetricCard 
+                label="Decisões pendentes" 
+                value={pendingDecisionsAmp}
+                subtext={pendingDecisionsAmp > 0 ? `${pendingDecisionsAmp} requerem sua atenção` : 'Tudo decidido'}
+                alert={pendingDecisionsAmp > 2}
+              />
+              
+              <MetricCard 
+                label="Projetos ativos" 
+                value={ampData.projects.length}
+                subtext="em movimento"
+              />
+              
+              <SectionCard title="Movimentos 90d">
+                {ampData.projects.length > 0 ? (
+                  <ul className="space-y-2">
+                    {ampData.projects.slice(0, 3).map((p: any) => (
+                      <li key={p.id} className="text-sm text-gray-700 truncate">
+                        • {p.name || p.title}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState message="Nenhum projeto ativo" />
+                )}
+              </SectionCard>
+              
+              {createEventAmp && (
+                <EventAgenda
+                  events={ampEvents}
+                  onAddServer={createEventAmp}
+                  onRemoveServer={deleteEvent}
+                  className="mx-0"
+                />
+              )}
 
-          <SectionCard title="Pessoa-âncora">
-            <AnchorPerson names={ampConfig.anchor} />
-          </SectionCard>
+              <SectionCard title="Pessoa-âncora">
+                <AnchorPerson names={ampConfig.anchor} />
+              </SectionCard>
 
-          <SectionCard title="Sistemas">
-            {ampConfig.systems.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {ampConfig.systems.map((s) => (
-                  <SystemBadge key={s} name={s} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState message="Pendente configurar" />
-            )}
-          </SectionCard>
-          
-          <SectionCard title="Última ação do Erick">
-            <LastActionIndicator 
-              lastAction="decisão" 
-              lastActionAt={lastDecisionAmp} 
-            />
-          </SectionCard>
+              <SectionCard title="Sistemas">
+                {ampConfig.systems.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {ampConfig.systems.map((s) => (
+                      <SystemBadge key={s} name={s} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState message="Pendente configurar" />
+                )}
+              </SectionCard>
+              
+              <SectionCard title="Última ação do Erick">
+                <LastActionIndicator 
+                  lastAction="decisão" 
+                  lastActionAt={lastDecisionAmp} 
+                />
+              </SectionCard>
+            </>
+          ) : (
+            <EmptyState message="Empresa não encontrada neste workspace" />
+          )}
         </CompanyColumn>
       </div>
     </div>

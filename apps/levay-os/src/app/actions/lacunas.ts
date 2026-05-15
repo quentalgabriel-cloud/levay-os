@@ -83,6 +83,7 @@ export async function updateLacuna(id: string, formData: FormData) {
   }
 
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const resolvida_em = CLOSED_STATUSES.has(parsed.data.status) ? new Date().toISOString() : null
 
@@ -101,6 +102,7 @@ export async function updateLacuna(id: string, formData: FormData) {
       resolvida_em,
     })
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating lacuna:', error)
@@ -114,10 +116,13 @@ export async function updateLacuna(id: string, formData: FormData) {
 
 export async function resolveLacuna(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+
   const { error } = await supabase
     .from('lacunas')
     .update({ status: 'RESOLVIDA', resolvida_em: new Date().toISOString() })
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error resolving lacuna:', error)
@@ -131,10 +136,13 @@ export async function resolveLacuna(id: string) {
 
 export async function deleteLacuna(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+
   const { error } = await supabase
     .from('lacunas')
     .delete()
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error deleting lacuna:', error)

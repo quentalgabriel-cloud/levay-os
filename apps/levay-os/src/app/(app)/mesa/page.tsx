@@ -125,14 +125,14 @@ export default async function MesaPage() {
     supabase.from('projects').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('status', 'ativo').not('attention', 'is', null).order('health_score').limit(6),
     supabase.from('decisions').select('*').eq('workspace_id', workspaceId).eq('format', 'open').order('created_at', { ascending: false }).limit(5),
     supabase.from('lacunas').select('*').eq('workspace_id', workspaceId).eq('status', 'ABERTA').eq('impacto', 'ALTO').order('created_at', { ascending: false }).limit(10),
-    (supabase as any).from('procurement_requests')
+    supabase.from('procurement_requests')
       .select('id, title, exception_reason, companies(name, color)')
       .eq('workspace_id', workspaceId)
       .eq('exception_flagged', true)
       .not('status', 'in', '(recebido,cancelado)')
       .order('requested_at', { ascending: false })
       .limit(5)
-      .then((r: { data: unknown[] | null }) => ({ data: r.data })),
+      .then(({ data }) => ({ data })),
   ])
 
   const cos = companies ?? []

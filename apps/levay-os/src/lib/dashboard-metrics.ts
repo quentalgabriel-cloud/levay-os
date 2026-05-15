@@ -111,12 +111,12 @@ const [
       }
     },
     leads: {
-      total: 0,
-      novo: 0,
-      qualificado: 0,
-      negociando: 0,
-      ganho: 0,
-      perdido: 0,
+      total: crmClients?.length || 0,
+      novo: crmClients?.filter(c => c.layer === 'novo').length || 0,
+      qualificado: crmClients?.filter(c => c.layer === 'qualificado').length || 0,
+      negociando: crmClients?.filter(c => c.layer === 'negociando').length || 0,
+      ganho: crmClients?.filter(c => c.status === 'ganho').length || 0,
+      perdido: crmClients?.filter(c => c.status === 'perdido').length || 0,
     },
     finance: {
       receivable: {

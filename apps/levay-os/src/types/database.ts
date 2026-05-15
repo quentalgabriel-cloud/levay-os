@@ -107,6 +107,74 @@ export type Database = {
           },
         ]
       }
+      alocacoes: {
+        Row: {
+          cargo: string
+          collaborator_id: string
+          company_id: string
+          created_at: string
+          fim: string | null
+          id: string
+          inicio: string
+          responsavel_substituto_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          cargo: string
+          collaborator_id: string
+          company_id: string
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string
+          responsavel_substituto_id?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          cargo?: string
+          collaborator_id?: string
+          company_id?: string
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string
+          responsavel_substituto_id?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alocacoes_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_responsavel_substituto_id_fkey"
+            columns: ["responsavel_substituto_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -154,6 +222,51 @@ export type Database = {
           },
           {
             foreignKeyName: "audit_log_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_events: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json | null
+          receivable_id: string
+          workspace_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          receivable_id: string
+          workspace_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          receivable_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_receivable_id_fkey"
+            columns: ["receivable_id"]
+            isOneToOne: false
+            referencedRelation: "receivables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_events_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -437,9 +550,9 @@ export type Database = {
           id: string
           legacy_notion_id: string | null
           name: string
-          promessa: string | null
           principal_desafio: string | null
           principal_oportunidade: string | null
+          promessa: string | null
           proximo_marco: string | null
           slug: string
           tagline: string | null
@@ -462,9 +575,9 @@ export type Database = {
           id?: string
           legacy_notion_id?: string | null
           name: string
-          promessa?: string | null
           principal_desafio?: string | null
           principal_oportunidade?: string | null
+          promessa?: string | null
           proximo_marco?: string | null
           slug: string
           tagline?: string | null
@@ -487,9 +600,9 @@ export type Database = {
           id?: string
           legacy_notion_id?: string | null
           name?: string
-          promessa?: string | null
           principal_desafio?: string | null
           principal_oportunidade?: string | null
+          promessa?: string | null
           proximo_marco?: string | null
           slug?: string
           tagline?: string | null
@@ -788,169 +901,6 @@ export type Database = {
           },
         ]
       }
-      lacunas: {
-        Row: {
-          bloqueia: string | null
-          contexto: string | null
-          created_at: string
-          dono_collaborator_id: string | null
-          empresa_id: string | null
-          id: string
-          impacto: string
-          proximo_movimento: string | null
-          resolvida_em: string | null
-          status: string
-          titulo: string
-          tipo: string
-          updated_at: string
-          workspace_id: string
-        }
-        Insert: {
-          bloqueia?: string | null
-          contexto?: string | null
-          created_at?: string
-          dono_collaborator_id?: string | null
-          empresa_id?: string | null
-          id?: string
-          impacto?: string
-          proximo_movimento?: string | null
-          resolvida_em?: string | null
-          status?: string
-          titulo: string
-          tipo?: string
-          updated_at?: string
-          workspace_id: string
-        }
-        Update: {
-          bloqueia?: string | null
-          contexto?: string | null
-          created_at?: string
-          dono_collaborator_id?: string | null
-          empresa_id?: string | null
-          id?: string
-          impacto?: string
-          proximo_movimento?: string | null
-          resolvida_em?: string | null
-          status?: string
-          titulo?: string
-          tipo?: string
-          updated_at?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lacunas_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lacunas_company_id_fkey"
-            columns: ["empresa_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lacunas_dono_collaborator_id_fkey"
-            columns: ["dono_collaborator_id"]
-            isOneToOne: false
-            referencedRelation: "collaborators"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workspace_config: {
-        Row: {
-          key: string
-          updated_at: string
-          value: Json
-          workspace_id: string
-        }
-        Insert: {
-          key: string
-          updated_at?: string
-          value: Json
-          workspace_id: string
-        }
-        Update: {
-          key?: string
-          updated_at?: string
-          value?: Json
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workspace_config_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      alocacoes: {
-        Row: {
-          cargo: string
-          collaborator_id: string
-          company_id: string
-          created_at: string
-          fim: string | null
-          id: string
-          inicio: string
-          responsavel_substituto_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        Insert: {
-          cargo: string
-          collaborator_id: string
-          company_id: string
-          created_at?: string
-          fim?: string | null
-          id?: string
-          inicio?: string
-          responsavel_substituto_id?: string | null
-          updated_at?: string
-          workspace_id: string
-        }
-        Update: {
-          cargo?: string
-          collaborator_id?: string
-          company_id?: string
-          created_at?: string
-          fim?: string | null
-          id?: string
-          inicio?: string
-          responsavel_substituto_id?: string | null
-          updated_at?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "alocacoes_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alocacoes_collaborator_id_fkey"
-            columns: ["collaborator_id"]
-            isOneToOne: false
-            referencedRelation: "collaborators"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alocacoes_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       decisions: {
         Row: {
           alternatives: string | null
@@ -1106,6 +1056,69 @@ export type Database = {
           },
         ]
       }
+      followup_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          idempotency_key: string
+          last_error: string | null
+          lead_id: string
+          message_id: string | null
+          offset_days: number
+          phone: string
+          scheduled_at: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          last_error?: string | null
+          lead_id: string
+          message_id?: string | null
+          offset_days: number
+          phone: string
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          last_error?: string | null
+          lead_id?: string
+          message_id?: string | null
+          offset_days?: number
+          phone?: string
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_jobs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followup_jobs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gaps: {
         Row: {
           company_id: string | null
@@ -1248,6 +1261,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "integrations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lacunas: {
+        Row: {
+          bloqueia: string | null
+          contexto: string | null
+          created_at: string
+          dono_collaborator_id: string | null
+          empresa_id: string | null
+          id: string
+          impacto: string
+          proximo_movimento: string | null
+          resolvida_em: string | null
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          bloqueia?: string | null
+          contexto?: string | null
+          created_at?: string
+          dono_collaborator_id?: string | null
+          empresa_id?: string | null
+          id?: string
+          impacto?: string
+          proximo_movimento?: string | null
+          resolvida_em?: string | null
+          status?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          bloqueia?: string | null
+          contexto?: string | null
+          created_at?: string
+          dono_collaborator_id?: string | null
+          empresa_id?: string | null
+          id?: string
+          impacto?: string
+          proximo_movimento?: string | null
+          resolvida_em?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lacunas_dono_collaborator_id_fkey"
+            columns: ["dono_collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lacunas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lacunas_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1538,6 +1624,230 @@ export type Database = {
           },
         ]
       }
+      procurement_history: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          request_id: string
+          workspace_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          request_id: string
+          workspace_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          request_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_history_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_history_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_items: {
+        Row: {
+          actual_unit_price: number | null
+          allocated_to_company_id: string | null
+          category: string | null
+          created_at: string
+          description: string
+          estimated_unit_price: number | null
+          id: string
+          item_status: string
+          line_total: number | null
+          notes: string | null
+          quantity_received: number | null
+          quantity_requested: number
+          request_id: string
+          unit: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          actual_unit_price?: number | null
+          allocated_to_company_id?: string | null
+          category?: string | null
+          created_at?: string
+          description: string
+          estimated_unit_price?: number | null
+          id?: string
+          item_status?: string
+          line_total?: number | null
+          notes?: string | null
+          quantity_received?: number | null
+          quantity_requested: number
+          request_id: string
+          unit?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          actual_unit_price?: number | null
+          allocated_to_company_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          estimated_unit_price?: number | null
+          id?: string
+          item_status?: string
+          line_total?: number | null
+          notes?: string | null
+          quantity_received?: number | null
+          quantity_requested?: number
+          request_id?: string
+          unit?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_items_allocated_to_company_id_fkey"
+            columns: ["allocated_to_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_requests: {
+        Row: {
+          actual_total: number | null
+          approved_by: string | null
+          company_id: string
+          consolidated_at: string | null
+          consolidated_by: string | null
+          created_at: string
+          estimated_total: number | null
+          exception_flagged: boolean
+          exception_reason: string | null
+          id: string
+          idempotency_key: string
+          needed_by: string
+          notes: string | null
+          purchased_at: string | null
+          received_at: string | null
+          request_number: number
+          requested_at: string
+          requested_by: string
+          status: string
+          supplier_id: string | null
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          actual_total?: number | null
+          approved_by?: string | null
+          company_id: string
+          consolidated_at?: string | null
+          consolidated_by?: string | null
+          created_at?: string
+          estimated_total?: number | null
+          exception_flagged?: boolean
+          exception_reason?: string | null
+          id?: string
+          idempotency_key: string
+          needed_by: string
+          notes?: string | null
+          purchased_at?: string | null
+          received_at?: string | null
+          request_number?: number
+          requested_at?: string
+          requested_by: string
+          status?: string
+          supplier_id?: string | null
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          actual_total?: number | null
+          approved_by?: string | null
+          company_id?: string
+          consolidated_at?: string | null
+          consolidated_by?: string | null
+          created_at?: string
+          estimated_total?: number | null
+          exception_flagged?: boolean
+          exception_reason?: string | null
+          id?: string
+          idempotency_key?: string
+          needed_by?: string
+          notes?: string | null
+          purchased_at?: string | null
+          received_at?: string | null
+          request_number?: number
+          requested_at?: string
+          requested_by?: string
+          status?: string
+          supplier_id?: string | null
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_requests_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           attention: string | null
@@ -1685,6 +1995,66 @@ export type Database = {
           },
         ]
       }
+      receivables: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          idempotency_key: string
+          paid_amount: number | null
+          paid_at: string | null
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          idempotency_key: string
+          paid_amount?: number | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          idempotency_key?: string
+          paid_amount?: number | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivables_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           company_id: string
@@ -1748,6 +2118,53 @@ export type Database = {
           },
           {
             foreignKeyName: "reservations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          category: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          updated_at: string
+          whatsapp: string | null
+          workspace_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+          workspace_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1859,6 +2276,35 @@ export type Database = {
           },
         ]
       }
+      workspace_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+          workspace_id: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+          workspace_id: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_config_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
@@ -1920,13 +2366,73 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      procurement_dashboard_v: {
+        Row: {
+          company_escopo: string | null
+          company_id: string | null
+          company_slug: string | null
+          proxima_data_necessaria: string | null
+          qtd_comprados: number | null
+          qtd_consolidados: number | null
+          qtd_excecoes: number | null
+          qtd_rupturas: number | null
+          qtd_solicitados: number | null
+          valor_comprado_pendente_recebimento: number | null
+          valor_estimado_aberto: number | null
+          workspace_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      create_receivable_with_event: {
+        Args: {
+          p_actor_user_id?: string
+          p_amount: number
+          p_company_id: string
+          p_description: string
+          p_due_date: string
+          p_idempotency_key: string
+          p_workspace_id: string
+        }
+        Returns: string
+      }
       get_my_workspace_id: { Args: never; Returns: string }
       initialize_sollu_pipeline: {
         Args: { p_workspace_id: string }
         Returns: string
+      }
+      log_procurement_event: {
+        Args: { p_event_type: string; p_payload?: Json; p_request_id: string }
+        Returns: string
+      }
+      schedule_followup_for_lead: {
+        Args: { p_lead_id: string }
+        Returns: undefined
+      }
+      update_receivable_status: {
+        Args: {
+          p_actor_user_id?: string
+          p_new_status: string
+          p_paid_amount?: number
+          p_receivable_id: string
+        }
+        Returns: undefined
       }
       workspace_id: { Args: never; Returns: string }
     }

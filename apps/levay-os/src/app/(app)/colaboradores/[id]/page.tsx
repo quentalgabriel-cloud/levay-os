@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useCurrentWorkspace } from '@/hooks/use-app-store'
 import { 
   ArrowLeft, 
   User, 
@@ -64,24 +65,24 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ColaboradorDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const supabase = createClient()
+  const { workspaceId } = useCurrentWorkspace()
   const [collaborator, setCollaborator] = useState<Collaborator | null>(null)
   const [companies, setCompanies] = useState<Company[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (params.id) loadData()
-  }, [params.id])
+    if (params.id && workspaceId) loadData()
+  }, [params.id, workspaceId])
 
   async function loadData() {
     const id = Array.isArray(params.id) ? params.id[0] : params.id
-    if (!id) return
+    if (!id || !workspaceId) return
 
     const [collabRes, companyRes] = await Promise.all([
-      supabase.from('collaborators').select('*').eq('id', id).single(),
-      supabase.from('companies').select('id, name, slug')
+      supabase.from('collaborators').select('*').eq('id', id).eq('workspace_id', workspaceId).single(),
+      supabase.from('companies').select('id, name, slug').eq('workspace_id', workspaceId)
     ])
 
     if (collabRes.data) {
@@ -103,6 +104,7 @@ export default function ColaboradorDetailPage() {
       .from('tasks')
       .select('id, title, status, due_at')
       .eq('owner_collaborator_id', id)
+      .eq('workspace_id', workspaceId)
       .order('due_at', { ascending: true })
       .limit(10)
     

@@ -7,7 +7,7 @@ const anthropic = new Anthropic({
 
 export interface TriageResult {
   title: string
-  status_cockpit: 'HOJE' | 'DECIDIR' | 'DELEGAR'
+  status_cockpit: 'hoje' | 'decidir' | 'delegar'
   status: 'inbox' | 'em_movimento'
   priority: number
   minimum_movement: string

@@ -78,6 +78,7 @@ export async function updateDecision(id: string, formData: FormData) {
   }
 
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
 
   const { error } = await supabase
     .from('decisions')
@@ -93,6 +94,7 @@ export async function updateDecision(id: string, formData: FormData) {
       company_id: parsed.data.company_id || null,
     })
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error updating decision:', error)
@@ -106,10 +108,13 @@ export async function updateDecision(id: string, formData: FormData) {
 
 export async function archiveDecision(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+
   const { error } = await supabase
     .from('decisions')
     .update({ format: 'archived' })
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error archiving decision:', error)
@@ -123,10 +128,13 @@ export async function archiveDecision(id: string) {
 
 export async function deleteDecision(id: string) {
   const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+
   const { error } = await supabase
     .from('decisions')
     .delete()
     .eq('id', id)
+    .eq('workspace_id', workspaceId)
 
   if (error) {
     console.error('Error deleting decision:', error)

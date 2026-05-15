@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { WorkspaceRole } from '@/lib/tenant-context'
+import { useCurrentWorkspace } from '@/hooks/use-app-store'
 
 interface TeamMember {
   id: string
@@ -13,6 +14,7 @@ interface TeamMember {
 
 export default function TeamPage() {
   const supabase = createClient()
+  const { workspaceId } = useCurrentWorkspace()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [collaborators, setCollaborators] = useState<Record<string, { name: string; email: string }>>({})
   const [loading, setLoading] = useState(true)
@@ -23,13 +25,15 @@ export default function TeamPage() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    loadMembers()
-  }, [])
+    if (workspaceId) loadMembers()
+  }, [workspaceId])
 
   async function loadMembers() {
+    if (!workspaceId) return
+
     const [membersRes, collabRes] = await Promise.all([
-      supabase.from('workspace_members').select('*'),
-      supabase.from('collaborators').select('user_id, name, email')
+      supabase.from('workspace_members').select('*').eq('workspace_id', workspaceId),
+      supabase.from('collaborators').select('user_id, name, email').eq('workspace_id', workspaceId)
     ])
 
     const membersData = membersRes.data || []
@@ -72,13 +76,14 @@ export default function TeamPage() {
   }
 
   async function updateRole(memberId: string, newRole: WorkspaceRole) {
-    await supabase.from('workspace_members').update({ role: newRole }).eq('id', memberId)
+    if (!workspaceId) return
+    await supabase.from('workspace_members').update({ role: newRole }).eq('id', memberId).eq('workspace_id', workspaceId)
     loadMembers()
   }
 
   async function removeMember(memberId: string) {
-    if (!confirm('Remover este membro?')) return
-    await supabase.from('workspace_members').delete().eq('id', memberId)
+    if (!confirm('Remover este membro?') || !workspaceId) return
+    await supabase.from('workspace_members').delete().eq('id', memberId).eq('workspace_id', workspaceId)
     loadMembers()
   }
 
