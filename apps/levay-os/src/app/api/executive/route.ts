@@ -1,39 +1,16 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 const TENANTS = ['sollu', 'bicabar', 'amp213']
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const role = searchParams.get('role') || 'operator'
-  const isCeo = role === 'ceo' || role === 'owner' || role === 'admin'
+export async function GET() {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  if (authError || !user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const tenants = isCeo ? TENANTS : ['sollu']
 
   const [companies, tasks, events, crmClients] = await Promise.all([
     supabase.from('companies').select('*'),
@@ -42,14 +19,13 @@ export async function GET(request: Request) {
     supabase.from('crm_clients').select('*')
   ])
 
-  const tenantsData = tenants.map(tenantId => {
-    const tenantCompanies = (companies.data || []).filter((c: any) => c.workspace_id === tenantId)
-    const tenantTasks = (tasks.data || []).filter((t: any) => t.workspace_id === tenantId)
-    const tenantEvents = (events.data || []).filter((e: any) => e.workspace_id === tenantId)
-    const tenantCRM = (crmClients.data || []).filter((c: any) => c.workspace_id === tenantId)
+  const tenantsData = TENANTS.map(tenantId => {
+    const tenantCompanies = (companies.data || []).filter((c: { workspace_id?: string }) => c.workspace_id === tenantId)
+    const tenantTasks = (tasks.data || []).filter((t: { workspace_id?: string }) => t.workspace_id === tenantId)
+    const tenantCRM = (crmClients.data || []).filter((c: { workspace_id?: string }) => c.workspace_id === tenantId)
 
     const totalTasks = tenantTasks.length
-    const completedTasks = tenantTasks.filter((t: any) => t.status === 'concluido' || t.status === 'fechado').length
+    const completedTasks = tenantTasks.filter((t: { status?: string }) => t.status === 'concluido' || t.status === 'fechado').length
 
     return {
       tenantId,
@@ -109,8 +85,7 @@ export async function GET(request: Request) {
     insights,
     metadata: {
       generatedAt: new Date().toISOString(),
-      tenantsIncluded: tenants,
-      role
+      tenantsIncluded: TENANTS,
     }
   })
 }

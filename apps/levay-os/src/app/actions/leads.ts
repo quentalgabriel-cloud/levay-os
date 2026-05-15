@@ -143,19 +143,21 @@ export async function createLead(input: CreateLeadInput) {
 
   if (data && data.phone) {
     const offsets = [0, 1, 3]
-    for (const offset of offsets) {
-      const idempotencyKey = `${workspaceId}:${data.id}:D+${offset}`
-      const scheduledAt = new Date(Date.now() + offset * 24 * 60 * 60 * 1000).toISOString()
-      await (supabase as any).from('followup_jobs').upsert({
-        workspace_id: workspaceId,
-        lead_id: data.id,
-        phone: data.phone,
-        offset_days: offset,
-        idempotency_key: idempotencyKey,
-        scheduled_at: scheduledAt,
-        status: 'pending',
-        attempts: 0
-      }, { onConflict: 'workspace_id,idempotency_key' })
+    const jobs = offsets.map((offset) => ({
+      workspace_id: workspaceId,
+      lead_id: data.id,
+      phone: data.phone!,
+      offset_days: offset,
+      idempotency_key: `${workspaceId}:${data.id}:D+${offset}`,
+      scheduled_at: new Date(Date.now() + offset * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'pending',
+      attempts: 0,
+    }))
+    const { error: jobsError } = await supabase
+      .from('followup_jobs')
+      .upsert(jobs, { onConflict: 'workspace_id,idempotency_key' })
+    if (jobsError) {
+      console.error('[createLead] falha ao agendar followup jobs:', jobsError)
     }
   }
 
@@ -245,68 +247,3 @@ export async function getLeadInteractions(leadId: string) {
   return { data, error: null }
 }
 
-export async function ingestLeadFromWebhook({
-  eventId,
-  workspaceId,
-  name,
-  phone,
-  source,
-  campaign,
-}: {
-  eventId: string
-  workspaceId: string
-  name: string
-  phone?: string
-  source: string
-  campaign?: string
-}) {
-  const supabase = await createClient()
-
-  const { data: pipeline } = await supabase
-    .from('crm_pipelines')
-    .select('id')
-    .eq('workspace_id', workspaceId)
-    .eq('name', 'Sollu')
-    .single()
-
-  if (!pipeline) return { error: 'Pipeline Sollu não inicializado', data: null }
-
-  const { data: firstStage } = await supabase
-    .from('crm_stages')
-    .select('id')
-    .eq('pipeline_id', pipeline.id)
-    .eq('workspace_id', workspaceId)
-    .order('position')
-    .limit(1)
-    .single()
-
-  if (!firstStage) return { error: 'Stages não configurados', data: null }
-
-  const { data: existing } = await supabase
-    .from('crm_leads')
-    .select('id')
-    .eq('workspace_id', workspaceId)
-    .eq('notes', `webhook:${eventId}`)
-    .maybeSingle()
-
-  if (existing) return { data: { leadId: existing.id, duplicate: true }, error: null }
-
-  const { data, error } = await supabase
-    .from('crm_leads')
-    .insert({
-      workspace_id: workspaceId,
-      pipeline_id: pipeline.id,
-      stage_id: firstStage.id,
-      name,
-      phone: phone || null,
-      source,
-      notes: `webhook:${eventId}${campaign ? ` campaign:${campaign}` : ''}`,
-    })
-    .select('id')
-    .single()
-
-  if (error) return { error: error.message, data: null }
-
-  revalidatePath('/crm/sollu')
-  return { data: { leadId: data.id, duplicate: false }, error: null }
-}

@@ -28,11 +28,11 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const isPublicApiRoute = request.nextUrl.pathname === '/api/webhook/n8n'
   const isPublicAsset = request.nextUrl.pathname.startsWith('/_next')
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth')
 
-  if (!user && !isAuthRoute && !isApiRoute && !isPublicAsset && !isAuthCallback) {
+  if (!user && !isAuthRoute && !isPublicApiRoute && !isPublicAsset && !isAuthCallback) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

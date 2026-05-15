@@ -24,5 +24,4 @@ export {
   updateLeadStatus,
   addInteraction,
   getLeadInteractions,
-  ingestLeadFromWebhook,
 } from './leads'

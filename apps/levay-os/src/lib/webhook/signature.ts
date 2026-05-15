@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 
 export function verifyN8nSignature({
   rawBody,
@@ -10,8 +10,9 @@ export function verifyN8nSignature({
   secret: string
 }): boolean {
   if (!signature || !secret) return false
-  const expected = createHash('sha256')
-    .update(`${rawBody}:${secret}`)
-    .digest('hex')
-  return expected === signature
+  const expected = createHmac('sha256', secret).update(rawBody).digest('hex')
+  const expectedBuf = Buffer.from(expected)
+  const signatureBuf = Buffer.from(signature)
+  if (expectedBuf.length !== signatureBuf.length) return false
+  return timingSafeEqual(expectedBuf, signatureBuf)
 }

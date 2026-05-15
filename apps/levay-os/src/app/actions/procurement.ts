@@ -52,12 +52,13 @@ export async function createProcurementRequest(input: CreateProcurementInput) {
 
   if (reqError) {
     if (reqError.code === '23505') {
-      const { data: dup } = await supabase
+      const { data: dup, error: dupErr } = await supabase
         .from('procurement_requests')
         .select('id')
         .eq('idempotency_key', input.idempotency_key)
         .eq('workspace_id', workspaceId)
         .maybeSingle()
+      if (dupErr) return { error: 'Falha ao verificar duplicata: ' + dupErr.message, id: null, deduped: false }
       return { id: dup?.id ?? null, deduped: true, error: null }
     }
     return { error: reqError.message, id: null, deduped: false }

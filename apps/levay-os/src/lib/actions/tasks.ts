@@ -51,15 +51,33 @@ export async function createTask(formData: FormData) {
   return { success: true }
 }
 
+const TaskStatusSchema = z.enum([
+  'inbox',
+  'a_fazer',
+  'em_andamento',
+  'aguardando',
+  'standby',
+  'fechando_ciclo',
+  'ciclo_fechado',
+  'cancelado',
+])
+
 export async function updateTaskStatus(taskId: string, status: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
+  const parsed = TaskStatusSchema.safeParse(status)
+  if (!parsed.success) return { error: 'Status inválido' }
+
+  const { data: wsId, error: wsErr } = await supabase.rpc('get_my_workspace_id')
+  if (wsErr || !wsId) return { error: 'Workspace não encontrado' }
+
   const { error } = await supabase
     .from('tasks')
-    .update({ status })
+    .update({ status: parsed.data })
     .eq('id', taskId)
+    .eq('workspace_id', wsId)
 
   if (error) return { error: error.message }
 
@@ -74,10 +92,11 @@ export async function processCapture(captureId: string, action: 'task' | 'dismis
   if (!user) return { error: 'Não autenticado' }
 
   if (action === 'dismiss') {
-    await supabase
+    const { error: dismissErr } = await supabase
       .from('captures')
       .update({ processed_at: new Date().toISOString() })
       .eq('id', captureId)
+    if (dismissErr) return { error: dismissErr.message }
     revalidatePath('/mesa')
     return { success: true }
   }
@@ -122,19 +141,21 @@ export async function processCapture(captureId: string, action: 'task' | 'dismis
       return { error: 'O Nonô teve um curto-circuito. Tente triagem manual.' }
     }
   } else {
-    await supabase.from('tasks').insert({
+    const { error: insertErr } = await supabase.from('tasks').insert({
       title: capture.raw_text ?? capture.transcript ?? 'Tarefa da captura',
       minimum_movement: '',
       workspace_id: wsId,
       status: 'inbox',
       inbox: true,
     })
+    if (insertErr) return { error: insertErr.message }
   }
 
-  await supabase
+  const { error: markErr } = await supabase
     .from('captures')
     .update({ processed_at: new Date().toISOString(), destination_kind: 'task' })
     .eq('id', captureId)
+  if (markErr) console.error('[processCapture] falha ao marcar captura:', markErr)
 
   revalidatePath('/mesa')
   return { success: true }
