@@ -3,7 +3,7 @@ import { getWorkspaceContext } from '@/lib/tenant-context'
 import { getCapHoje } from '@/lib/workspace-config'
 import { COMPANY_COLOR, PRIORITY_LABEL } from '@/lib/vocabulary'
 import type { Tables } from '@/types/database'
-import { Inbox, CalendarClock, GitBranch, AlertTriangle } from 'lucide-react'
+import { Inbox, CalendarClock, GitBranch, AlertTriangle, ShoppingCart } from 'lucide-react'
 import { StatsCard } from '@/components/ui/stats-card'
 import { MiniCalendar } from '@/components/ui/MiniCalendar'
 import CaptureInbox from './CaptureInbox'
@@ -115,6 +115,7 @@ export default async function MesaPage() {
     { data: projects },
     { data: pendingDecisions },
     { data: openLacunas },
+    { data: procurementExceptions },
   ] = await Promise.all([
     supabase.from('companies').select('*').eq('workspace_id', workspaceId).order('name'),
     supabase.from('tasks').select('*, companies(name, slug)').eq('inbox', true).eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(20),
@@ -124,10 +125,20 @@ export default async function MesaPage() {
     supabase.from('projects').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('status', 'ativo').not('attention', 'is', null).order('health_score').limit(6),
     supabase.from('decisions').select('*').eq('workspace_id', workspaceId).eq('format', 'open').order('created_at', { ascending: false }).limit(5),
     supabase.from('lacunas').select('*').eq('workspace_id', workspaceId).eq('status', 'ABERTA').eq('impacto', 'ALTO').order('created_at', { ascending: false }).limit(10),
+    (supabase as any).from('procurement_requests')
+      .select('id, title, exception_reason, companies(name, color)')
+      .eq('workspace_id', workspaceId)
+      .eq('exception_flagged', true)
+      .not('status', 'in', '(recebido,cancelado)')
+      .order('requested_at', { ascending: false })
+      .limit(5)
+      .then((r: { data: unknown[] | null }) => ({ data: r.data })),
   ])
 
   const cos = companies ?? []
-  const alertCount = (noMovementTasks?.length ?? 0) + (pendingDecisions?.length ?? 0) + (openLacunas?.length ?? 0)
+  type ProcurementException = { id: string; title: string; exception_reason: string | null; companies: { name: string; color: string } | null }
+  const exceptions = (procurementExceptions ?? []) as ProcurementException[]
+  const alertCount = (noMovementTasks?.length ?? 0) + (pendingDecisions?.length ?? 0) + (openLacunas?.length ?? 0) + exceptions.length
 
   const calEvents = [
     ...(inboxTasks ?? []).filter(t => t.due_at).map(t => ({ date: t.due_at!.slice(0, 10) })),
@@ -250,8 +261,30 @@ export default async function MesaPage() {
               )}
             </Block>
 
-            {/* Block 6: Alertas (lacunas alto impacto + tasks sem movimento) */}
+            {/* Block 6: Alertas (exceções compras + lacunas alto impacto + tasks sem movimento) */}
             <Block title="Alertas" count={alertCount} accentColor={alertCount > 0 ? 'border-red-500/30' : undefined}>
+              {exceptions.map((exc) => {
+                const co = Array.isArray(exc.companies) ? exc.companies[0] : exc.companies
+                return (
+                  <a key={exc.id} href={`/compras/${exc.id}`} className="group block px-5 py-4 hover:bg-foreground/[0.03] rounded-2xl transition-all duration-300 active:scale-[0.98]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShoppingCart className="w-3 h-3 text-red-500 shrink-0" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">Exceção compras</span>
+                      {co && (
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: co.color }}
+                          aria-hidden
+                        />
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-foreground truncate group-hover:text-red-500">{exc.title}</p>
+                    {exc.exception_reason && (
+                      <p className="text-[11px] text-muted mt-0.5 truncate italic">{exc.exception_reason}</p>
+                    )}
+                  </a>
+                )
+              })}
               {openLacunas?.map((l) => (
                 <div key={l.id} className="group px-5 py-4 hover:bg-foreground/[0.03] rounded-2xl transition-all duration-300 cursor-pointer active:scale-[0.98]">
                   <div className="flex items-center gap-2 mb-1">
