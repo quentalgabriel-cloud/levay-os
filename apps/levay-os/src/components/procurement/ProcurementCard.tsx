@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { AlertTriangle, Calendar, Package } from 'lucide-react'
 import { ProcurementStatusPill, type ProcurementStatus } from './ProcurementStatusPill'
@@ -20,9 +21,10 @@ export interface ProcurementRequestCardData {
 
 interface ProcurementCardProps {
   request: ProcurementRequestCardData
-  onClick?: (id: string) => void
   index?: number
 }
+
+const MotionLink = motion(Link)
 
 function formatDate(iso: string): string {
   try {
@@ -41,18 +43,16 @@ function daysUntil(iso: string): number {
   return Math.ceil((target - now) / (1000 * 60 * 60 * 24))
 }
 
-export function ProcurementCard({ request, onClick, index = 0 }: ProcurementCardProps) {
+export function ProcurementCard({ request, index = 0 }: ProcurementCardProps) {
   const days = daysUntil(request.needed_by)
   const isOverdue = days < 0 && request.status !== 'recebido' && request.status !== 'cancelado'
   const isUrgent = days >= 0 && days <= 1 && request.status === 'solicitado'
 
   const totalCents = request.estimated_total ? toCents(request.estimated_total) : null
 
-  const handleClick = () => onClick?.(request.id)
-
   return (
-    <motion.button
-      type="button"
+    <MotionLink
+      href={`/compras/${request.id}`}
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -60,8 +60,7 @@ export function ProcurementCard({ request, onClick, index = 0 }: ProcurementCard
       transition={{ delay: index * 0.04 }}
       whileHover={{ scale: 1.005 }}
       whileTap={{ scale: 0.998 }}
-      onClick={handleClick}
-      className="w-full text-left relative overflow-hidden bg-card border border-border rounded-2xl p-4 hover:bg-foreground/[0.02] hover:shadow-md transition-all"
+      className="block w-full text-left relative overflow-hidden bg-card border border-border rounded-2xl p-4 hover:bg-foreground/[0.02] hover:shadow-md transition-all"
     >
       {request.exception_flagged && (
         <div
@@ -119,6 +118,6 @@ export function ProcurementCard({ request, onClick, index = 0 }: ProcurementCard
           <span className="line-clamp-2">{request.exception_reason}</span>
         </div>
       )}
-    </motion.button>
+    </MotionLink>
   )
 }

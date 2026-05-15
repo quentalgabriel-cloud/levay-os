@@ -123,3 +123,98 @@ export async function getProcurementRequests() {
   if (error) return { error: error.message, data: null }
   return { data, error: null }
 }
+
+export async function getProcurementDetail(requestId: string) {
+  const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+
+  const { data: request, error } = await (supabase as any)
+    .from('procurement_requests')
+    .select(`
+      id, title, status, needed_by, notes,
+      estimated_total, actual_total,
+      exception_flagged, exception_reason,
+      requested_at, consolidated_at, purchased_at, received_at,
+      request_number,
+      companies (id, name, color),
+      procurement_items (
+        id, description, unit, category, notes,
+        quantity_requested, quantity_received,
+        estimated_unit_price, actual_unit_price, line_total,
+        item_status
+      ),
+      procurement_history (
+        id, event_type, payload, created_at, actor_user_id
+      )
+    `)
+    .eq('id', requestId)
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { referencedTable: 'procurement_history', ascending: false })
+    .single()
+
+  if (error) return { error: error.message, data: null }
+  return { data: request, error: null }
+}
+
+type AdvanceStatus = 'consolidado' | 'comprado' | 'recebido' | 'cancelado'
+
+const VALID_TRANSITIONS: Record<string, AdvanceStatus[]> = {
+  solicitado: ['consolidado', 'cancelado'],
+  consolidado: ['comprado', 'cancelado'],
+  comprado: ['recebido', 'cancelado'],
+}
+
+const STATUS_TIMESTAMP: Record<string, string> = {
+  consolidado: 'consolidated_at',
+  comprado: 'purchased_at',
+  recebido: 'received_at',
+}
+
+const STATUS_EVENT: Record<string, string> = {
+  consolidado: 'consolidated',
+  comprado: 'sent_to_supplier',
+  recebido: 'received',
+  cancelado: 'cancelled',
+}
+
+export async function updateProcurementStatus(requestId: string, newStatus: AdvanceStatus) {
+  const supabase = await createClient()
+  const { workspaceId } = await getWorkspaceContext(supabase)
+  const db = supabase as any
+
+  const { data: current } = await db
+    .from('procurement_requests')
+    .select('status')
+    .eq('id', requestId)
+    .eq('workspace_id', workspaceId)
+    .single()
+
+  if (!current) return { error: 'Pedido não encontrado', data: null }
+
+  if (!VALID_TRANSITIONS[current.status]?.includes(newStatus)) {
+    return { error: `Transição inválida: ${current.status} → ${newStatus}`, data: null }
+  }
+
+  const patch: Record<string, string> = { status: newStatus }
+  if (STATUS_TIMESTAMP[newStatus]) {
+    patch[STATUS_TIMESTAMP[newStatus]] = new Date().toISOString()
+  }
+
+  const { error } = await db
+    .from('procurement_requests')
+    .update(patch)
+    .eq('id', requestId)
+    .eq('workspace_id', workspaceId)
+
+  if (error) return { error: error.message, data: null }
+
+  await db.rpc('log_procurement_event', {
+    p_request_id: requestId,
+    p_event_type: STATUS_EVENT[newStatus],
+    p_payload: { previous_status: current.status },
+  })
+
+  revalidatePath('/compras')
+  revalidatePath(`/compras/${requestId}`)
+  return { data: { id: requestId, status: newStatus }, error: null }
+}
