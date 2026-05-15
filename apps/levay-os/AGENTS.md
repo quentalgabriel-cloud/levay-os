@@ -1,26 +1,19 @@
 # AGENTS.md — LEVAY OS
 
 
-## Gotchas conhecidos (2026-05-15)
+## Regras de RLS (obrigatório em toda tabela nova)
 
-> Identificados pela vistoria arquitetural (Aria). Corrija ao tocar estes arquivos.
+- Use **`public.current_workspace_id()`** — função canônica, schema explícito, ORDER BY determinístico
+- Não usar `auth.workspace_id()` (existe, mas sem ORDER BY), nem `workspace_id()` sem schema
+- Toda tabela nova: 4 policies (SELECT / INSERT / UPDATE / DELETE) + `ENABLE ROW LEVEL SECURITY`
+- Migrations: sempre idempotentes (`IF NOT EXISTS`, `DROP POLICY IF EXISTS` antes de criar)
 
-| Arquivo | Problema | Severidade |
-|---------|----------|-----------|
-| `lib/tenant-context.ts:16,37,92` | `supabase: any` — deve ser `SupabaseServerClient` | ALTO |
-| `lib/tenant-context.ts` | Falta `import 'server-only'` | ALTO |
-| `lib/dashboard-metrics.ts` | Falta `import 'server-only'` + `getWorkspaceCompanies` duplicado de tenant-context | MÉDIO |
-| `lib/agents/intelligence.ts` | Falta `import 'server-only'` + model id hard-coded desatualizado | ALTO |
-| `app/actions/tasks.ts:38,76,96,118` | `return { error: error.message }` expõe erros internos do Postgres | ALTO |
-| `next.config.ts` | Vazio — falta headers de segurança e optimizePackageImports | ALTO |
-| `vercel.json` | Sem HSTS, CSP, X-Frame-Options | ALTO |
+## Dead code já removido (não procurar estes arquivos)
 
-## Dead code — NÃO importar, NÃO referenciar
-
-- `src/components/AppNav.tsx` — substituído por Sidebar.tsx
-- `src/lib/actions/tasks.ts` — duplicata de `src/app/actions/tasks.ts`
-- `src/app/api/executive/route.ts` — endpoint quebrado (filtros JS vs UUID)
-- `src/app/(app)/configuracoes/page.tsx` — salva API keys no localStorage (vulnerabilidade)
+- `src/components/AppNav.tsx` — removido, substituído por `Sidebar.tsx`
+- `src/lib/actions/tasks.ts` — removido, usar `src/app/actions/tasks.ts`
+- `src/app/api/executive/route.ts` — removido, `executive/page.tsx` usa Server Component direto
+- `src/app/(app)/configuracoes/page.tsx` — reescrita como Server Component (sem localStorage)
 
 ## Stack obrigatório
 - Next.js 16 App Router (nunca Pages Router)
