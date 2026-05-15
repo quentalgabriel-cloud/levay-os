@@ -70,13 +70,15 @@ export function TaskKanbanBoard({ initialTasks, companies }: TaskKanbanBoardProp
     tasks.filter(t => t.status === columnId || (!t.status && columnId === 'a_fazer'))
 
   const handleDragEnd = useCallback((columnId: string, taskId: string) => {
+    const snapshot = tasks
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: columnId } : t))
     startTransition(async () => {
-      await updateTaskStatus(taskId, columnId)
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, status: columnId } : t
-      ))
+      const result = await updateTaskStatus(taskId, columnId)
+      if (result?.error) {
+        setTasks(snapshot)
+      }
     })
-  }, [])
+  }, [tasks])
 
   const handleCreateTask = (columnId: string) => {
     setActiveColumn(columnId)

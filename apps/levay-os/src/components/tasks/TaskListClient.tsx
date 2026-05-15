@@ -134,9 +134,13 @@ export function TaskListClient({ initialTasks, companies }: TaskListClientProps)
   }
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
+    const snapshot = tasks
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
     startTransition(async () => {
-      await updateTaskStatus(taskId, newStatus)
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
+      const result = await updateTaskStatus(taskId, newStatus)
+      if (result?.error) {
+        setTasks(snapshot)
+      }
     })
   }
 

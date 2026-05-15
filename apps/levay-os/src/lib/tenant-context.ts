@@ -138,13 +138,16 @@ export async function logAuditEvent(
   details?: Record<string, unknown>
 ) {
   const supabase = await createClient()
-  await supabase.from('audit_log').insert({
+  const { error } = await supabase.from('audit_log').insert({
     workspace_id: workspaceId,
     actor_user_id: userId,
     action,
     entity_kind: entityKind,
     entity_id: entityId
   })
+  if (error) {
+    console.error('[audit_log] insert failed:', { workspaceId, action, entityKind, entityId, error: error.message })
+  }
 }
 
 export async function isWorkspaceMember(workspaceId: string, userId: string): Promise<boolean> {

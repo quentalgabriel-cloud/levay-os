@@ -83,7 +83,7 @@ function Block({
   accentColor?: string
 }) {
   return (
-    <div className={`glass-card ${accentColor} rounded-[2rem] flex flex-col overflow-hidden transition-all duration-500 hover:shadow-accent/5`}>
+    <div className={`bg-card border border-border ${accentColor} rounded-[2rem] flex flex-col overflow-hidden transition-all duration-500 hover:shadow-accent/5`}>
       <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-foreground/[0.02]">
         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">{title}</h2>
         {count !== undefined && (
@@ -106,6 +106,15 @@ export default async function MesaPage() {
 
   const capHoje = await getCapHoje()
 
+  const safe = <T,>(p: Promise<{ data: T | null; error: unknown }>) =>
+    p.then(({ data, error }) => {
+      if (error) console.error('[mesa] query error:', error)
+      return { data: data ?? null }
+    }).catch((err) => {
+      console.error('[mesa] query exception:', err)
+      return { data: null }
+    })
+
   const [
     { data: companies },
     { data: inboxTasks },
@@ -117,22 +126,21 @@ export default async function MesaPage() {
     { data: openLacunas },
     { data: procurementExceptions },
   ] = await Promise.all([
-    supabase.from('companies').select('*').eq('workspace_id', workspaceId).order('name'),
-    supabase.from('tasks').select('*, companies(name, slug)').eq('inbox', true).eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(20),
-    supabase.from('tasks').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('status', 'em_andamento').lte('due_at', new Date(today.getTime() + 86400000).toISOString()).order('priority', { ascending: false }).limit(capHoje),
-    supabase.from('tasks').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('minimum_movement', '').neq('status', 'ciclo_fechado').order('created_at').limit(10),
-    supabase.from('tasks').select('*, companies(name, slug)').eq('workspace_id', workspaceId).not('owner_collaborator_id', 'is', null).eq('status', 'em_andamento').order('updated_at', { ascending: false }).limit(10),
-    supabase.from('projects').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('status', 'ativo').not('attention', 'is', null).order('health_score').limit(6),
-    supabase.from('decisions').select('*').eq('workspace_id', workspaceId).eq('format', 'open').order('created_at', { ascending: false }).limit(5),
-    supabase.from('lacunas').select('*').eq('workspace_id', workspaceId).eq('status', 'ABERTA').eq('impacto', 'ALTO').order('created_at', { ascending: false }).limit(10),
-    supabase.from('procurement_requests')
+    safe(supabase.from('companies').select('*').eq('workspace_id', workspaceId).order('name')),
+    safe(supabase.from('tasks').select('*, companies(name, slug)').eq('inbox', true).eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(20)),
+    safe(supabase.from('tasks').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('status', 'em_andamento').lte('due_at', new Date(today.getTime() + 86400000).toISOString()).order('priority', { ascending: false }).limit(capHoje)),
+    safe(supabase.from('tasks').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('minimum_movement', '').neq('status', 'ciclo_fechado').order('created_at').limit(10)),
+    safe(supabase.from('tasks').select('*, companies(name, slug)').eq('workspace_id', workspaceId).not('owner_collaborator_id', 'is', null).eq('status', 'em_andamento').order('updated_at', { ascending: false }).limit(10)),
+    safe(supabase.from('projects').select('*, companies(name, slug)').eq('workspace_id', workspaceId).eq('status', 'ativo').not('attention', 'is', null).order('health_score').limit(6)),
+    safe(supabase.from('decisions').select('*').eq('workspace_id', workspaceId).eq('format', 'open').order('created_at', { ascending: false }).limit(5)),
+    safe(supabase.from('lacunas').select('*').eq('workspace_id', workspaceId).eq('status', 'ABERTA').eq('impacto', 'ALTO').order('created_at', { ascending: false }).limit(10)),
+    safe(supabase.from('procurement_requests')
       .select('id, title, exception_reason, companies(name, color)')
       .eq('workspace_id', workspaceId)
       .eq('exception_flagged', true)
       .not('status', 'in', '(recebido,cancelado)')
       .order('requested_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => ({ data })),
+      .limit(5)),
   ])
 
   const cos = companies ?? []

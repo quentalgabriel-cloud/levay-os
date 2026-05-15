@@ -51,12 +51,14 @@ export function CrmKanban({ stages, leads, pipelineId, tenantColor = '#2563EB' }
   }
 
   const handleDrop = useCallback((stageId: string) => {
-    if (draggedLead) {
-      startTransition(async () => {
-        await updateLeadStage({ leadId: draggedLead, stageId })
-      })
-      setDraggedLead(null)
-    }
+    if (!draggedLead) return
+    const captured = draggedLead
+    startTransition(async () => {
+      const result = await updateLeadStage({ leadId: captured, stageId })
+      if (!result?.error) {
+        setDraggedLead(null)
+      }
+    })
   }, [draggedLead])
 
   const openCreateModal = (stageId: string) => {

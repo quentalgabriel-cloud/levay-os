@@ -1,20 +1,23 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { z } from 'zod'
 import { NONO_SYSTEM_PROMPT } from './prompts'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-export interface TriageResult {
-  title: string
-  status_cockpit: 'hoje' | 'decidir' | 'delegar'
-  status: 'inbox' | 'em_movimento'
-  priority: number
-  minimum_movement: string
-  company_slug: 'sollu' | 'amp213' | 'bica' | null
-  justification: string
-  error?: string
-}
+const TriageResultSchema = z.object({
+  title: z.string(),
+  status_cockpit: z.enum(['hoje', 'decidir', 'delegar']),
+  status: z.enum(['inbox', 'em_movimento']),
+  priority: z.number(),
+  minimum_movement: z.string(),
+  company_slug: z.enum(['sollu', 'amp213', 'bica']).nullable(),
+  justification: z.string(),
+  error: z.string().optional(),
+})
+
+export type TriageResult = z.infer<typeof TriageResultSchema>
 
 export async function triageCaptureWithAI(text: string): Promise<TriageResult> {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -37,7 +40,8 @@ export async function triageCaptureWithAI(text: string): Promise<TriageResult> {
 
   try {
     const jsonStr = content.text.match(/\{[\s\S]*\}/)?.[0] || content.text
-    return JSON.parse(jsonStr) as TriageResult
+    const parsed = JSON.parse(jsonStr)
+    return TriageResultSchema.parse(parsed)
   } catch (err) {
     console.error('Falha ao parsear resposta do Nonô:', content.text)
     throw new Error('Falha na inteligência do Nonô')

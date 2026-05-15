@@ -46,9 +46,7 @@ export function NewProcurementForm({ companies }: NewProcurementFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const [idempotencyKey] = useState(() =>
-    typeof crypto !== 'undefined' ? crypto.randomUUID() : 'pending-uuid'
-  )
+  const [idempotencyKey] = useState(() => crypto.randomUUID())
 
   const updateItem = (index: number, patch: Partial<ItemDraft>) => {
     setItems(prev => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)))
