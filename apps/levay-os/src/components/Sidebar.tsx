@@ -15,6 +15,7 @@ import {
   Settings,
   Kanban,
   GitCommit,
+  ShoppingCart,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -45,6 +46,7 @@ const navGroups = [
       { href: '/empresas', label: 'Empresas', icon: Building2 },
       { href: '/bica-amp', label: 'Bica+AMP', icon: Building2 },
       { href: '/crm/sollu', label: 'Sollu CRM', icon: TrendingUp },
+      { href: '/compras', label: 'Compras', icon: ShoppingCart },
     ],
   },
   {
@@ -58,6 +60,12 @@ const navGroups = [
     label: 'Analytics' as string | undefined,
     items: [
       { href: '/executive', label: 'CEO Dashboard', icon: TrendingUp },
+    ],
+  },
+  {
+    label: 'Sistema' as string | undefined,
+    items: [
+      { href: '/configuracoes', label: 'Configurações', icon: Settings },
     ],
   },
 ]

@@ -5,8 +5,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getWorkspaceContext } from '@/lib/tenant-context'
-import { getSolluPipeline } from '@/app/actions/leads'
+import { getSolluPipeline, getSolluStages } from '@/app/actions/leads'
 import { LeadsDataTable } from '@/components/ui/leads-data-table'
+import { CrmKanbanBoard } from './CrmKanbanBoard'
 import type { Lead } from '@/components/ui/leads-data-table'
 import { Users } from 'lucide-react'
 
@@ -45,6 +46,7 @@ type LeadRow = {
   value: number | null
   probability: string | null
   updated_at: string
+  stage_id: string
   crm_stages: { name: string } | null
 }
 
@@ -61,7 +63,15 @@ function mapToLead(row: LeadRow): Lead {
     interest: [],
     probability: deriveProbability(row.probability),
     lastAction: relativeDate(row.updated_at),
+    stageId: row.stage_id,
   }
+}
+
+type StageRow = {
+  id: string
+  name: string
+  color: string
+  position: number
 }
 
 export default async function SolluPage() {
@@ -69,13 +79,15 @@ export default async function SolluPage() {
   const { workspaceId } = await getWorkspaceContext(supabase)
 
   const pipelineResult = await getSolluPipeline()
+  const stagesResult = await getSolluStages()
 
   let leads: Lead[] = []
+  let stages: StageRow[] = []
 
   if (pipelineResult.data) {
     const { data } = await supabase
       .from('crm_leads')
-      .select('id, name, email, source, source_type, status, value, probability, updated_at, crm_stages(name)')
+      .select('id, name, email, source, source_type, status, value, probability, updated_at, stage_id, crm_stages(name)')
       .eq('workspace_id', workspaceId)
       .eq('pipeline_id', pipelineResult.data.id)
       .order('created_at', { ascending: false })
@@ -83,8 +95,17 @@ export default async function SolluPage() {
     leads = (data ?? []).map((row) => mapToLead(row as LeadRow))
   }
 
+  if (stagesResult.data) {
+    stages = stagesResult.data.map(s => ({
+      id: s.id,
+      name: s.name,
+      color: s.color ?? '#94a3b8',
+      position: s.position
+    }))
+  }
+
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+    <div className="p-8 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-700">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Sollu — CRM</h1>
@@ -106,7 +127,14 @@ export default async function SolluPage() {
           <p className="text-xs text-muted mt-1">Verifique as configurações do workspace.</p>
         </div>
       ) : (
-        <LeadsDataTable leads={leads} tenantColor={SOLLU_COLOR} />
+        pipelineResult.data && stages.length > 0 && (
+          <CrmKanbanBoard
+            stages={stages}
+            leads={leads}
+            pipelineId={pipelineResult.data.id}
+            tenantColor={SOLLU_COLOR}
+          />
+        )
       )}
     </div>
   )
