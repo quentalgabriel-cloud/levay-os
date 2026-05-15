@@ -40,7 +40,7 @@ export default async function ComprasPage() {
     estimated_total: number | null
     exception_flagged: boolean | null
     exception_reason: string | null
-    companies: { name: string; color: string } | { name: string; color: string }[] | null
+    companies: { name: string; color: string | null } | { name: string; color: string | null }[] | null
     procurement_items: { id: string }[] | null
   }
 
