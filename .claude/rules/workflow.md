@@ -15,8 +15,15 @@ O usuario NAO precisa digitar comandos. O XOIA detecta o modo e executa.
 | Sinal no pedido | Modo | Ciclo |
 |-----------------|------|-------|
 | "corrige", "fix", "ajusta", "muda X para Y", config simples | **Quick** | BUILD → CHECK → SHIP |
-| "cria", "implementa", "landing page", "feature", "integra" | **Standard** | PLAN → BUILD → CHECK → SHIP |
-| "projeta sistema", "arquitetura", "avalia codebase", "migra" | **Deep** | PLAN (design) → BUILD → CHECK → SHIP |
+| "cria", "implementa", "feature", "integra" | **Standard** | PLAN → BUILD → CHECK → SHIP |
+| "projeta sistema", "arquitetura", "avalia codebase", "migra", "rls", "migration", "banco" | **Deep** | PLAN (design) → SECURITY GATE → BUILD → CHECK → SHIP |
+
+## Security Gate (Modo Deep — obrigatório)
+
+Todo modo Deep que toque banco, RLS, auth ou env vars passa pelo Security Gate antes do BUILD.
+Checklist completo em `.claude/rules/security-gate.md`.
+
+Resposta deve ser SIM para todos os itens antes de prosseguir.
 
 ## Execucao de Cada Passo
 
@@ -34,6 +41,7 @@ O usuario NAO precisa digitar comandos. O XOIA detecta o modo e executa.
 ### CHECK (automatico)
 - Roda: `npm run lint && npm test && npm run typecheck`
 - Se falhar: corrige e re-executa (max 3 tentativas)
+- Para mudancas em DB/migrations: verifica drift (`supabase migration list`) e cobertura RLS
 - Para landing pages: aplica CRO scoring (CCD + MECLABS)
 - Atualiza story checkboxes se aplicavel
 

@@ -8,6 +8,9 @@ confidence: high
 gaps: [OpenAPI-docs, rate-limiting, request-validation, auth-middleware]
 ---
 
+> ~~DEPRECATED~~ — API Fastify movida para apps/_legacy/api/. App ativo usa Next.js Server Actions.
+
+
 # API Routes — Fastify Endpoints
 
 ## Base URL

@@ -1,6 +1,5 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - 'apps/levay-os'
 allowBuilds:
   '@prisma/client': false
   '@prisma/engines': false

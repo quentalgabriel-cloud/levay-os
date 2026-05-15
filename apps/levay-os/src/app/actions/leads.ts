@@ -38,8 +38,8 @@ export async function ensureSolluPipeline() {
   })
 
   if (error) {
-    console.error('Error initializing Sollu pipeline:', error)
-    return { error: error.message }
+    console.error('[leads] ensureSolluPipeline', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   return { data: { pipelineId: data as string } }
@@ -87,7 +87,10 @@ export async function getSolluStages() {
     .eq('pipeline_id', pipelineResult.data.id)
     .order('position')
 
-  if (error) return { error: error.message, data: null }
+  if (error) {
+    console.error('[leads] getSolluStages', error)
+    return { error: 'Ocorreu um erro. Tente novamente.', data: null }
+  }
   return { data, error: null }
 }
 
@@ -108,7 +111,10 @@ export async function getLeadsByPipeline(pipelineId: string) {
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
-  if (error) return { error: error.message, data: null }
+  if (error) {
+    console.error('[leads] getSolluStages', error)
+    return { error: 'Ocorreu um erro. Tente novamente.', data: null }
+  }
   return { data, error: null }
 }
 
@@ -137,8 +143,8 @@ export async function createLead(input: CreateLeadInput) {
     .single()
 
   if (error) {
-    console.error('Error creating lead:', error)
-    return { error: error.message, data: null }
+    console.error('[leads] createLead', error)
+    return { error: 'Ocorreu um erro. Tente novamente.', data: null }
   }
 
   if (data && data.phone) {
@@ -176,8 +182,8 @@ export async function updateLeadStage({ leadId, stageId }: UpdateLeadStageInput)
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating lead stage:', error)
-    return { error: error.message }
+    console.error('[leads] updateLeadStage', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/crm/sollu')
@@ -195,8 +201,8 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating lead status:', error)
-    return { error: error.message }
+    console.error('[leads] updateLeadStatus', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/crm/sollu')
@@ -224,8 +230,8 @@ export async function addInteraction({ leadId, type, content }: AddInteractionIn
     .single()
 
   if (error) {
-    console.error('Error adding interaction:', error)
-    return { error: error.message, data: null }
+    console.error('[leads] addInteraction', error)
+    return { error: 'Ocorreu um erro. Tente novamente.', data: null }
   }
 
   revalidatePath('/crm/sollu')
@@ -243,7 +249,10 @@ export async function getLeadInteractions(leadId: string) {
     .eq('workspace_id', workspaceId)
     .order('created_at', { ascending: false })
 
-  if (error) return { error: error.message, data: null }
+  if (error) {
+    console.error('[leads] getLeadInteractions', error)
+    return { error: 'Ocorreu um erro. Tente novamente.', data: null }
+  }
   return { data, error: null }
 }
 

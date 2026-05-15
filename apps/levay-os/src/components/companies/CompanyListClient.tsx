@@ -48,7 +48,6 @@ export function CompanyListClient({ initialCompanies, projects, tasks }: Company
   )
 
   const handleCreateNew = () => {
-    console.log('Create new company')
   }
 
   const renderCompany = (company: CompanyWithStats, index: number) => {

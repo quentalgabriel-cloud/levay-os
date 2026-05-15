@@ -54,8 +54,8 @@ export async function createCompany(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating company:', error)
-    return { error: error.message }
+    console.error('[companies] createCompany', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/empresas')
@@ -114,8 +114,8 @@ export async function updateCompany(id: string, formData: FormData) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating company:', error)
-    return { error: error.message }
+    console.error('[companies] updateCompany', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/empresas')
@@ -135,8 +135,8 @@ export async function deleteCompany(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error deleting company:', error)
-    return { error: error.message }
+    console.error('[companies] deleteCompany', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/empresas')
@@ -168,8 +168,8 @@ export async function bulkCreateCompanies(companies: { name: string; color?: str
     .select()
 
   if (error) {
-    console.error('Error bulk creating companies:', error)
-    return { error: error.message }
+    console.error('[companies] bulkCreateCompanies', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/empresas')

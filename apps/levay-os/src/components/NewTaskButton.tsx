@@ -21,7 +21,6 @@ export default function NewTaskButton({ companies }: Props) {
   const [open, setOpen] = useState(false)
 
   const handleSubmit = async (task: TaskFormData) => {
-    console.log('Creating task:', task)
     // Server action would be called here
     // await createTaskAction(task)
   }

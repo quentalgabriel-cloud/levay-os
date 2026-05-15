@@ -29,7 +29,10 @@ export async function createEvent(
     status: 'planejado',
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[events] createEvent', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
+  }
 
   revalidatePath('/bica-amp')
   return {}
@@ -45,7 +48,10 @@ export async function deleteEvent(id: string): Promise<{ error?: string }> {
     .eq('id', id)
     .eq('workspace_id', workspaceId)
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[events] deleteEvent', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
+  }
 
   revalidatePath('/bica-amp')
   return {}

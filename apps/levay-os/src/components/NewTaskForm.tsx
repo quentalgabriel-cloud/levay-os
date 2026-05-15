@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createTask } from '@/lib/actions/tasks'
+import { createTask } from '@/app/actions'
 
 interface Props {
   companies: { id: string; name: string; color: string | null }[]

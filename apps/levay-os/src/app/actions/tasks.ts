@@ -35,13 +35,13 @@ export async function createTask(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating task:', error)
-    return { error: error.message }
+    console.error('[tasks] createTask', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/tarefas')
   revalidatePath('/mesa')
-  
+
   return { success: true, data }
 }
 
@@ -73,13 +73,13 @@ export async function updateTask(id: string, formData: FormData) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating task:', error)
-    return { error: error.message }
+    console.error('[tasks] updateTask', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/tarefas')
   revalidatePath('/mesa')
-  
+
   return { success: true }
 }
 
@@ -94,13 +94,13 @@ export async function deleteTask(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error deleting task:', error)
-    return { error: error.message }
+    console.error('[tasks] deleteTask', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/tarefas')
   revalidatePath('/mesa')
-  
+
   return { success: true }
 }
 
@@ -115,13 +115,13 @@ export async function updateTaskStatus(id: string, status: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating task status:', error)
-    return { error: error.message }
+    console.error('[tasks] updateTaskStatus', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/tarefas')
   revalidatePath('/mesa')
-  
+
   return { success: true }
 }
 
@@ -136,8 +136,8 @@ export async function bulkUpdateTaskStatus(ids: string[], status: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error bulk updating tasks:', error)
-    return { error: error.message }
+    console.error('[tasks] bulkUpdateTaskStatus', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/tarefas')

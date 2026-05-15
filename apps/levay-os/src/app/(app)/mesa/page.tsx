@@ -106,8 +106,8 @@ export default async function MesaPage() {
 
   const capHoje = await getCapHoje()
 
-  const safe = <T,>(p: Promise<{ data: T | null; error: unknown }>) =>
-    p.then(({ data, error }) => {
+  const safe = <T,>(p: PromiseLike<{ data: T | null; error: unknown }>) =>
+    Promise.resolve(p).then(({ data, error }) => {
       if (error) console.error('[mesa] query error:', error)
       return { data: data ?? null }
     }).catch((err) => {

@@ -1,5 +1,8 @@
+import 'server-only'
 import { createClient } from './supabase/server'
 import type { Database } from '@/types/database'
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
 
 export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer'
 
@@ -13,7 +16,7 @@ export interface TenantContext {
   isAdmin: boolean
 }
 
-export async function getWorkspaceContext(supabase: any) {
+export async function getWorkspaceContext(supabase: SupabaseServerClient) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('UNAUTHORIZED')
   
@@ -34,7 +37,7 @@ export async function getWorkspaceContext(supabase: any) {
   }
 }
 
-export async function requireAuth(supabase: any): Promise<TenantContext> {
+export async function requireAuth(supabase: SupabaseServerClient): Promise<TenantContext> {
   const { workspaceId, userId, userRole } = await getWorkspaceContext(supabase)
 
   const { data: wsMember } = await supabase
@@ -89,7 +92,7 @@ export function requireAdmin(context: TenantContext): void {
   }
 }
 
-export function addWorkspaceFilter<T>(query: any, workspaceId: string): any {
+export function addWorkspaceFilter<T>(query: { eq: (col: string, val: string) => T }, workspaceId: string): T {
   return query.eq('workspace_id', workspaceId)
 }
 

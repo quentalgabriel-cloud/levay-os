@@ -58,10 +58,14 @@ export async function createProcurementRequest(input: CreateProcurementInput) {
         .eq('idempotency_key', input.idempotency_key)
         .eq('workspace_id', workspaceId)
         .maybeSingle()
-      if (dupErr) return { error: 'Falha ao verificar duplicata: ' + dupErr.message, id: null, deduped: false }
+      if (dupErr) {
+        console.error('[procurement] createProcurementRequest dedup', dupErr)
+        return { error: 'Ocorreu um erro. Tente novamente.', id: null, deduped: false }
+      }
       return { id: dup?.id ?? null, deduped: true, error: null }
     }
-    return { error: reqError.message, id: null, deduped: false }
+    console.error('[procurement] createProcurementRequest', reqError)
+    return { error: 'Ocorreu um erro. Tente novamente.', id: null, deduped: false }
   }
 
   const { error: itemsError } = await supabase
@@ -79,7 +83,8 @@ export async function createProcurementRequest(input: CreateProcurementInput) {
 
   if (itemsError) {
     await supabase.from('procurement_requests').delete().eq('id', request.id)
-    return { error: 'Falha ao salvar itens: ' + itemsError.message, id: null, deduped: false }
+    console.error('[procurement] createProcurementRequest items', itemsError)
+    return { error: 'Ocorreu um erro. Tente novamente.', id: null, deduped: false }
   }
 
   revalidatePath('/compras')
@@ -107,7 +112,10 @@ export async function updateProcurementStatus(
     .eq('id', requestId)
     .eq('workspace_id', workspaceId)
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[procurement] updateProcurementStatus', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
+  }
 
   revalidatePath('/compras')
   revalidatePath(`/compras/${requestId}`)
@@ -127,7 +135,10 @@ export async function approveException(requestId: string) {
     .eq('workspace_id', workspaceId)
     .eq('exception_flagged', true)
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[procurement] approveException', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
+  }
 
   revalidatePath('/mesa')
   revalidatePath(`/compras/${requestId}`)

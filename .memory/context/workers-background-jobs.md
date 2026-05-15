@@ -8,6 +8,9 @@ confidence: medium
 gaps: [bullmq-redis, job-monitoring-dashboard, webhooks-whatsapp-inbound]
 ---
 
+> ~~DEPRECATED~~ — Workers não estão rodando. Código em apps/_legacy/workers/. Sem processador ativo de followup_jobs.
+
+
 # Workers — Background Jobs e Follow-up
 
 ## Estrutura

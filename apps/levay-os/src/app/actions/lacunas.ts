@@ -67,8 +67,8 @@ export async function createLacuna(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating lacuna:', error)
-    return { error: error.message }
+    console.error('[lacunas] createLacuna', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/mesa')
@@ -105,8 +105,8 @@ export async function updateLacuna(id: string, formData: FormData) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating lacuna:', error)
-    return { error: error.message }
+    console.error('[lacunas] updateLacuna', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/mesa')
@@ -125,8 +125,8 @@ export async function resolveLacuna(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error resolving lacuna:', error)
-    return { error: error.message }
+    console.error('[lacunas] resolveLacuna', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/mesa')
@@ -145,8 +145,8 @@ export async function deleteLacuna(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error deleting lacuna:', error)
-    return { error: error.message }
+    console.error('[lacunas] deleteLacuna', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/mesa')

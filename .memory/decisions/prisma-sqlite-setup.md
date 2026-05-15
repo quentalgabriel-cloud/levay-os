@@ -6,6 +6,9 @@ confidence: high
 tags: [database, prisma, sqlite, development, setup]
 ---
 
+> ~~DEPRECATED~~ — App migrou para Supabase. Prisma/SQLite desativado (apps/_legacy/).
+
+
 # Prisma ORM com SQLite — Setup de Desenvolvimento
 
 ## Estado: ✅ Aprovada

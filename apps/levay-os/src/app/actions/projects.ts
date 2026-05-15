@@ -35,8 +35,8 @@ export async function createProject(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating project:', error)
-    return { error: error.message }
+    console.error('[projects] createProject', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/projetos')
@@ -79,8 +79,8 @@ export async function updateProject(id: string, formData: FormData) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating project:', error)
-    return { error: error.message }
+    console.error('[projects] updateProject', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/projetos')
@@ -100,8 +100,8 @@ export async function deleteProject(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error deleting project:', error)
-    return { error: error.message }
+    console.error('[projects] deleteProject', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/projetos')
@@ -121,8 +121,8 @@ export async function archiveProject(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error archiving project:', error)
-    return { error: error.message }
+    console.error('[projects] archiveProject', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/projetos')

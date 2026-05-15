@@ -29,3 +29,4 @@ dev.db
 Sollu-notion/
 export-notion-total/
 .vercel
+.env*.local

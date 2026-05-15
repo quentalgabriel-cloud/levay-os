@@ -62,8 +62,8 @@ export async function createDecision(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating decision:', error)
-    return { error: error.message }
+    console.error('[decisions] createDecision', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/decisoes')
@@ -97,8 +97,8 @@ export async function updateDecision(id: string, formData: FormData) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error updating decision:', error)
-    return { error: error.message }
+    console.error('[decisions] updateDecision', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/decisoes')
@@ -117,8 +117,8 @@ export async function archiveDecision(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error archiving decision:', error)
-    return { error: error.message }
+    console.error('[decisions] archiveDecision', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/decisoes')
@@ -137,8 +137,8 @@ export async function deleteDecision(id: string) {
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error deleting decision:', error)
-    return { error: error.message }
+    console.error('[decisions] deleteDecision', error)
+    return { error: 'Ocorreu um erro. Tente novamente.' }
   }
 
   revalidatePath('/decisoes')

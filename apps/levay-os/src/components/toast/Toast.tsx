@@ -141,15 +141,11 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 export const toast = {
   success: (message: string, duration?: number) => {
     // Will be implemented via context
-    console.log('[Toast] Success:', message)
   },
   error: (message: string, duration?: number) => {
-    console.log('[Toast] Error:', message)
   },
   info: (message: string, duration?: number) => {
-    console.log('[Toast] Info:', message)
   },
   warning: (message: string, duration?: number) => {
-    console.log('[Toast] Warning:', message)
   }
 }

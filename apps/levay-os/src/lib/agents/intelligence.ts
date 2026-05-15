@@ -1,3 +1,4 @@
+import 'server-only'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { NONO_SYSTEM_PROMPT } from './prompts'
@@ -25,7 +26,7 @@ export async function triageCaptureWithAI(text: string): Promise<TriageResult> {
   }
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6',
     max_tokens: 1024,
     system: NONO_SYSTEM_PROMPT,
     messages: [

@@ -60,7 +60,6 @@ export function ProjectListClient({ initialProjects, companies }: ProjectListCli
   })
 
   const handleCreateNew = () => {
-    console.log('Create new project')
   }
 
   const renderProject = (project: Project, index: number) => {

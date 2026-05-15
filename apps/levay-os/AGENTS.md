@@ -1,5 +1,27 @@
 # AGENTS.md — LEVAY OS
 
+
+## Gotchas conhecidos (2026-05-15)
+
+> Identificados pela vistoria arquitetural (Aria). Corrija ao tocar estes arquivos.
+
+| Arquivo | Problema | Severidade |
+|---------|----------|-----------|
+| `lib/tenant-context.ts:16,37,92` | `supabase: any` — deve ser `SupabaseServerClient` | ALTO |
+| `lib/tenant-context.ts` | Falta `import 'server-only'` | ALTO |
+| `lib/dashboard-metrics.ts` | Falta `import 'server-only'` + `getWorkspaceCompanies` duplicado de tenant-context | MÉDIO |
+| `lib/agents/intelligence.ts` | Falta `import 'server-only'` + model id hard-coded desatualizado | ALTO |
+| `app/actions/tasks.ts:38,76,96,118` | `return { error: error.message }` expõe erros internos do Postgres | ALTO |
+| `next.config.ts` | Vazio — falta headers de segurança e optimizePackageImports | ALTO |
+| `vercel.json` | Sem HSTS, CSP, X-Frame-Options | ALTO |
+
+## Dead code — NÃO importar, NÃO referenciar
+
+- `src/components/AppNav.tsx` — substituído por Sidebar.tsx
+- `src/lib/actions/tasks.ts` — duplicata de `src/app/actions/tasks.ts`
+- `src/app/api/executive/route.ts` — endpoint quebrado (filtros JS vs UUID)
+- `src/app/(app)/configuracoes/page.tsx` — salva API keys no localStorage (vulnerabilidade)
+
 ## Stack obrigatório
 - Next.js 16 App Router (nunca Pages Router)
 - React 19 Server Components por padrão — `'use client'` só quando necessário
