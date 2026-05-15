@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -11,13 +11,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [redirectUrl, setRedirectUrl] = useState('')
   const supabase = createClient()
   const router = useRouter()
-
-  useEffect(() => {
-    setRedirectUrl(window.location.origin + '/auth/callback')
-  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -34,7 +29,7 @@ export default function LoginPage() {
     } else {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: redirectUrl },
+        options: { emailRedirectTo: window.location.origin + '/auth/callback' },
       })
       if (error) {
         setError(error.message)

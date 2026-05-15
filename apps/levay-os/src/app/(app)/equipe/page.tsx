@@ -24,10 +24,6 @@ export default function TeamPage() {
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    if (workspaceId) loadMembers()
-  }, [workspaceId])
-
   async function loadMembers() {
     if (!workspaceId) return
 
@@ -48,6 +44,11 @@ export default function TeamPage() {
     setCollaborators(collabMap)
     setLoading(false)
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (workspaceId) loadMembers()
+  }, [workspaceId])
 
   async function inviteUser() {
     if (!newEmail) {

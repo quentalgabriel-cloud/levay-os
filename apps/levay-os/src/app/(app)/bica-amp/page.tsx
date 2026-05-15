@@ -134,6 +134,7 @@ function LastActionIndicator({ lastAction, lastActionAt }: {
     )
   }
   
+  // eslint-disable-next-line react-hooks/purity
   const days = Math.floor((Date.now() - new Date(lastActionAt).getTime()) / (1000 * 60 * 60 * 24))
   const isStale = days > 7
   
@@ -256,6 +257,7 @@ export default async function BicaAmpPage() {
               <SectionCard title="Movimentos 90d">
                 {bicaData.projects.length > 0 ? (
                   <ul className="space-y-2">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {bicaData.projects.slice(0, 3).map((p: any) => (
                       <li key={p.id} className="text-sm text-gray-700 truncate">
                         • {p.name || p.title}
@@ -380,6 +382,7 @@ export default async function BicaAmpPage() {
               <SectionCard title="Movimentos 90d">
                 {ampData.projects.length > 0 ? (
                   <ul className="space-y-2">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {ampData.projects.slice(0, 3).map((p: any) => (
                       <li key={p.id} className="text-sm text-gray-700 truncate">
                         • {p.name || p.title}

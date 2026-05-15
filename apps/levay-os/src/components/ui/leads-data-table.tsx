@@ -81,6 +81,25 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 type SortKey = 'name' | 'size' | 'probability' | 'status'
 const PROB_ORDER: Record<Lead['probability'], number> = { baixo: 0, médio: 1, alto: 2 }
 
+function SortIcon({ col, sortKey, sortAsc, accentVar }: { col: SortKey; sortKey: SortKey; sortAsc: boolean; accentVar: string }) {
+  if (sortKey !== col) return <ChevronUp className="w-3 h-3 opacity-20" />
+  return sortAsc
+    ? <ChevronUp className="w-3 h-3" style={{ color: accentVar }} />
+    : <ChevronDown className="w-3 h-3" style={{ color: accentVar }} />
+}
+
+function ColHead({ col, label, sortKey, sortAsc, accentVar, onToggle }: { col: SortKey; label: string; sortKey: SortKey; sortAsc: boolean; accentVar: string; onToggle: (col: SortKey) => void }) {
+  return (
+    <button
+      onClick={() => onToggle(col)}
+      className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.15em] text-muted hover:text-foreground transition-colors duration-200"
+    >
+      {label}
+      <SortIcon col={col} sortKey={sortKey} sortAsc={sortAsc} accentVar={accentVar} />
+    </button>
+  )
+}
+
 export function LeadsDataTable({ leads: initial = [], tenantColor, className = '' }: LeadsDataTableProps) {
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('name')
@@ -107,25 +126,6 @@ export function LeadsDataTable({ leads: initial = [], tenantColor, className = '
       else if (sortKey === 'status') cmp = a.status.localeCompare(b.status)
       return sortAsc ? cmp : -cmp
     })
-
-  function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <ChevronUp className="w-3 h-3 opacity-20" />
-    return sortAsc
-      ? <ChevronUp className="w-3 h-3" style={{ color: accentVar }} />
-      : <ChevronDown className="w-3 h-3" style={{ color: accentVar }} />
-  }
-
-  function ColHead({ col, label }: { col: SortKey; label: string }) {
-    return (
-      <button
-        onClick={() => toggleSort(col)}
-        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.15em] text-muted hover:text-foreground transition-colors duration-200"
-      >
-        {label}
-        <SortIcon col={col} />
-      </button>
-    )
-  }
 
   return (
     <div className={`glass-card rounded-[2rem] flex flex-col overflow-hidden ${className}`}>
@@ -158,13 +158,13 @@ export function LeadsDataTable({ leads: initial = [], tenantColor, className = '
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left px-5 py-3"><ColHead col="name" label="Lead" /></th>
-              <th className="text-left px-3 py-3 hidden md:table-cell"><ColHead col="status" label="Status" /></th>
-              <th className="text-left px-3 py-3 hidden lg:table-cell"><ColHead col="size" label="Ticket" /></th>
+              <th className="text-left px-5 py-3"><ColHead col="name" label="Lead" sortKey={sortKey} sortAsc={sortAsc} accentVar={accentVar} onToggle={toggleSort} /></th>
+              <th className="text-left px-3 py-3 hidden md:table-cell"><ColHead col="status" label="Status" sortKey={sortKey} sortAsc={sortAsc} accentVar={accentVar} onToggle={toggleSort} /></th>
+              <th className="text-left px-3 py-3 hidden lg:table-cell"><ColHead col="size" label="Ticket" sortKey={sortKey} sortAsc={sortAsc} accentVar={accentVar} onToggle={toggleSort} /></th>
               <th className="text-left px-3 py-3 hidden xl:table-cell">
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-muted">Interesse</span>
               </th>
-              <th className="text-left px-3 py-3"><ColHead col="probability" label="Prob." /></th>
+              <th className="text-left px-3 py-3"><ColHead col="probability" label="Prob." sortKey={sortKey} sortAsc={sortAsc} accentVar={accentVar} onToggle={toggleSort} /></th>
               <th className="text-left px-5 py-3 hidden lg:table-cell">
                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-muted">Última ação</span>
               </th>

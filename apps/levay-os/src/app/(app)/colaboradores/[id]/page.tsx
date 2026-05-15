@@ -72,10 +72,6 @@ export default function ColaboradorDetailPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (params.id && workspaceId) loadData()
-  }, [params.id, workspaceId])
-
   async function loadData() {
     const id = Array.isArray(params.id) ? params.id[0] : params.id
     if (!id || !workspaceId) return
@@ -107,10 +103,15 @@ export default function ColaboradorDetailPage() {
       .eq('workspace_id', workspaceId)
       .order('due_at', { ascending: true })
       .limit(10)
-    
+
     setTasks(tasksRes.data || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (params.id && workspaceId) loadData()
+  }, [params.id, workspaceId])
 
   function getCompanyName(companyId: string | null) {
     if (!companyId) return null
@@ -172,7 +173,7 @@ export default function ColaboradorDetailPage() {
 
           {collaborator.profile_data?.impact_phrase && (
             <p className="text-sm text-gray-400 mt-3 italic">
-              "{collaborator.profile_data.impact_phrase}"
+              &ldquo;{collaborator.profile_data.impact_phrase}&rdquo;
             </p>
           )}
 
