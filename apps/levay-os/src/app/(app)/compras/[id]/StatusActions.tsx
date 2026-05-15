@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { AlertCircle, CheckCircle2, ShoppingBag, Package, X } from 'lucide-react'
-import { updateProcurementStatus } from '@/app/actions/procurement'
+import { AlertCircle, CheckCircle2, ShoppingBag, Package, X, ShieldCheck } from 'lucide-react'
+import { updateProcurementStatus, approveException } from '@/app/actions/procurement'
 import type { ProcurementStatus } from '@/components/procurement/ProcurementStatusPill'
 
 interface StatusActionsProps {
   requestId: string
   currentStatus: ProcurementStatus
+  exceptionFlagged?: boolean
 }
 
 const NEXT_ACTION: Partial<Record<ProcurementStatus, { label: string; nextStatus: 'consolidado' | 'comprado' | 'recebido'; icon: React.ReactNode }>> = {
@@ -16,15 +17,16 @@ const NEXT_ACTION: Partial<Record<ProcurementStatus, { label: string; nextStatus
   comprado: { label: 'Confirmar recebimento', nextStatus: 'recebido', icon: <Package className="w-4 h-4" /> },
 }
 
-export function StatusActions({ requestId, currentStatus }: StatusActionsProps) {
+export function StatusActions({ requestId, currentStatus, exceptionFlagged }: StatusActionsProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
 
   const nextAction = NEXT_ACTION[currentStatus]
   const canCancel = currentStatus !== 'recebido' && currentStatus !== 'cancelado'
+  const canApproveException = !!exceptionFlagged && canCancel
 
-  if (!nextAction && !canCancel) return null
+  if (!nextAction && !canCancel && !canApproveException) return null
 
   const handleAdvance = () => {
     if (!nextAction) return
@@ -45,6 +47,14 @@ export function StatusActions({ requestId, currentStatus }: StatusActionsProps) 
     })
   }
 
+  const handleApproveException = () => {
+    setError(null)
+    startTransition(async () => {
+      const result = await approveException(requestId)
+      if (result.error) setError(result.error)
+    })
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
@@ -56,6 +66,16 @@ export function StatusActions({ requestId, currentStatus }: StatusActionsProps) 
           >
             {nextAction.icon}
             {isPending ? 'Salvando...' : nextAction.label}
+          </button>
+        )}
+        {canApproveException && (
+          <button
+            onClick={handleApproveException}
+            disabled={isPending}
+            className="flex items-center gap-2 min-h-[44px] px-4 rounded-full border border-amber-500/50 text-amber-600 bg-amber-500/10 text-sm font-medium hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            {isPending ? 'Salvando...' : 'Aprovar exceção'}
           </button>
         )}
         {canCancel && (

@@ -187,7 +187,7 @@ export default async function ProcurementDetailPage({
           )}
         </div>
 
-        <StatusActions requestId={request.id} currentStatus={request.status as ProcurementStatus} />
+        <StatusActions requestId={request.id} currentStatus={request.status as ProcurementStatus} exceptionFlagged={request.exception_flagged} />
       </div>
 
       {/* Itens */}
